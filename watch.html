@@ -146,65 +146,94 @@ let currentSeason = 1;
 let currentEp     = 1;
 
 async function loadDetail() {
-  if (!pageUrl) { document.getElementById('detail-info').innerHTML = '<div class="empty-state"><div class="empty-icon">😕</div><div class="empty-title">No content found</div></div>'; return; }
+  if (!pageUrl) {
+    document.getElementById('detail-info').innerHTML =
+      `<div class="empty-state">
+        <div class="empty-icon">😕</div>
+        <div class="empty-title">No content found</div>
+      </div>`;
+    return;
+  }
 
   try {
-    // Fetch details
-    details = isSeries ? await cymor.seriesDetails(pageUrl) : await cymor.movieDetails(pageUrl);
+    details = isSeries
+      ? await cymor.seriesDetails(pageUrl)
+      : await cymor.movieDetails(pageUrl);
+
     renderHero(details);
     renderInfo(details);
 
-    // Fetch download links
-    if (isSeries) {
-      dlFiles = await cymor.episodeDownloads(pageUrl, currentSeason, currentEp);
-    } else {
-      dlFiles = await cymor.movieDownloads(pageUrl);
-    }
+    dlFiles = isSeries
+      ? await cymor.episodeDownloads(pageUrl, currentSeason, currentEp)
+      : await cymor.movieDownloads(pageUrl);
+
     renderDownloads(dlFiles);
 
   } catch (e) {
-    document.getElementById('detail-info').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load</div><div class="empty-sub">${e.message}</div><button class="btn-primary" style="margin-top:16px" onclick="loadDetail()">Retry</button></div>`;
+    console.error("DETAIL LOAD ERROR:", e);
+
+    document.getElementById('detail-info').innerHTML =
+      `<div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <div class="empty-title">Failed to load</div>
+        <div class="empty-sub">${e?.message || 'Unknown error'}</div>
+        <button class="btn-primary" style="margin-top:16px" onclick="loadDetail()">Retry</button>
+      </div>`;
+
     toast('Could not load details', 'error');
   }
 }
 
 function renderHero(d) {
   const heroEl = document.getElementById('detail-hero');
-  const bg = d.poster || d.backdrop || '';
+  const bg = d?.poster || d?.backdrop || '';
+
   heroEl.innerHTML = `
-    ${bg ? `<img class="detail-hero-bg" src="${bg}" onerror="this.style.display='none'">` : '<div class="detail-hero-bg" style="background:var(--bg3)"></div>'}
+    ${bg
+      ? `<img class="detail-hero-bg" src="${bg}" onerror="this.style.display='none'">`
+      : `<div class="detail-hero-bg" style="background:var(--bg3)"></div>`}
+
     <div class="detail-hero-gradient"></div>
+
     <div class="detail-back" onclick="history.back()">←</div>
+
     <div class="share-btn" onclick="shareItem()">⬆</div>
-    <div class="wl-btn ${isInWatchlist(pageUrl) ? 'in-list' : ''}" id="wl-btn" onclick="handleWatchlist()">
-      ${isInWatchlist(pageUrl) ? '🔖' : '🔖'}
-    </div>`;
+
+    <div class="wl-btn ${isInWatchlist(pageUrl) ? 'in-list' : ''}"
+         id="wl-btn"
+         onclick="handleWatchlist()">
+      🔖
+    </div>
+  `;
 }
 
 function renderInfo(d) {
-  const genres = (d.genres || []).join(', ') || 'N/A';
-  const cast   = (d.cast || []).slice(0, 10);
-  document.title = `${d.title || 'Watch'} — Cymor Movie Hub`;
+  const genres = (d?.genres || []).join(', ');
+  const cast   = (d?.cast || []).slice(0, 10);
+
+  document.title = `${d?.title || 'Watch'} — Cymor Movie Hub`;
 
   document.getElementById('detail-info').innerHTML = `
     <div class="detail-poster-row">
-      ${d.poster
-        ? `<img class="detail-poster" src="${d.poster}" onerror="this.outerHTML='<div class=detail-poster-fallback>🎬</div>'">`
+      ${d?.poster
+        ? `<img class="detail-poster" src="${d.poster}"
+            onerror="this.outerHTML='<div class=detail-poster-fallback>🎬</div>'">`
         : `<div class="detail-poster-fallback">🎬</div>`}
+
       <div>
-        <div class="detail-title">${d.title || 'Unknown Title'}</div>
+        <div class="detail-title">${d?.title || 'Unknown Title'}</div>
       </div>
     </div>
 
     <div class="detail-meta-chips">
-      ${d.year     ? `<div class="meta-chip">${d.year}</div>` : ''}
-      ${d.rating   ? `<div class="meta-chip gold">⭐ ${parseFloat(d.rating).toFixed(1)}</div>` : ''}
-      ${d.duration ? `<div class="meta-chip">⏱ ${d.duration}</div>` : ''}
-      ${d.language ? `<div class="meta-chip">🌐 ${d.language}</div>` : ''}
-      ${genres     ? `<div class="meta-chip">${genres}</div>` : ''}
+      ${d?.year ? `<div class="meta-chip">${d.year}</div>` : ''}
+      ${d?.rating ? `<div class="meta-chip gold">⭐ ${Number(d.rating).toFixed(1)}</div>` : ''}
+      ${d?.duration ? `<div class="meta-chip">⏱ ${d.duration}</div>` : ''}
+      ${d?.language ? `<div class="meta-chip">🌐 ${d.language}</div>` : ''}
+      ${genres ? `<div class="meta-chip">${genres}</div>` : ''}
     </div>
 
-    ${d.description ? `
+    ${d?.description ? `
       <div class="detail-desc" id="desc">${d.description}</div>
       <div class="read-more" id="read-more" onclick="toggleDesc()">Read more</div>
     ` : ''}
@@ -214,11 +243,14 @@ function renderInfo(d) {
       <button class="btn-dl" onclick="handleWatchlist()">🔖 Watchlist</button>
     </div>
 
-    ${cast.length ? `
+    ${cast?.length ? `
       <div style="margin-bottom:20px">
         <div class="quality-title">Cast</div>
-        <div class="cast-row">${cast.map(c => `<div class="cast-chip">${c}</div>`).join('')}</div>
-      </div>` : ''}
+        <div class="cast-row">
+          ${cast.map(c => `<div class="cast-chip">${c}</div>`).join('')}
+        </div>
+      </div>
+    ` : ''}
 
     <!-- Tabs -->
     <div class="tab-pills">
@@ -227,30 +259,41 @@ function renderInfo(d) {
       <div class="tab-pill" onclick="switchTab('subtitles')">Subtitles</div>
     </div>
 
-    <!-- Downloads tab -->
+    <!-- Downloads -->
     <div class="tab-panel active" id="tab-downloads">
       <div id="dl-loading" class="loading-center"><div class="spinner"></div></div>
       <div class="dl-quality-row" id="dl-list" style="display:none"></div>
     </div>
 
-    <!-- Episodes tab -->
+    <!-- Episodes -->
     ${isSeries ? `
     <div class="tab-panel" id="tab-episodes">
       <div class="season-tabs" id="season-tabs"></div>
       <div class="episode-grid" id="episode-grid"></div>
-      <div style="margin-top:16px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text2)">
-        Selected: <b style="color:var(--gold)" id="ep-label">S${currentSeason} E${currentEp}</b>
-        <button class="btn-primary" style="margin-top:12px;width:100%;justify-content:center" onclick="loadEpisodeDownloads()">▼ Get Episode Links</button>
+
+      <div style="margin-top:16px;padding:14px;background:var(--card);
+                  border:1px solid var(--border);border-radius:var(--radius);
+                  font-size:13px;color:var(--text2)">
+        Selected:
+        <b style="color:var(--gold)" id="ep-label">S${currentSeason} E${currentEp}</b>
+
+        <button class="btn-primary"
+                style="margin-top:12px;width:100%"
+                onclick="loadEpisodeDownloads()">
+          ▼ Get Episode Links
+        </button>
       </div>
     </div>` : ''}
 
-    <!-- Subtitles tab -->
+    <!-- Subtitles -->
     <div class="tab-panel" id="tab-subtitles">
-      <div id="sub-list"><div style="color:var(--text3);font-size:13px">Loading subtitles…</div></div>
-    </div>`;
+      <div id="sub-list">
+        <div style="color:var(--text3);font-size:13px">Subtitles coming later…</div>
+      </div>
+    </div>
+  `;
 
-  // Build season/episode grids for series
-  if (isSeries && d.seasons) {
+  if (isSeries && d?.seasons) {
     buildSeasonEpisodePicker(d);
   }
 }
@@ -258,61 +301,67 @@ function renderInfo(d) {
 function renderDownloads(files) {
   const loading = document.getElementById('dl-loading');
   const list    = document.getElementById('dl-list');
+
   if (!loading || !list) return;
 
   loading.style.display = 'none';
-  list.style.display    = 'flex';
+  list.style.display = 'flex';
 
-  const videos = files?.videos || [];
+  const videos = files?.sources || files?.videos || [];
+
   if (!videos.length) {
-    list.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:20px 0">No download links available for this title</div>';
-  } else {
-    list.innerHTML = videos.map((v, i) => `
-      <div class="dl-quality-item">
-        <div>
-          <div class="dl-quality-label">${v.quality || `Option ${i+1}`}</div>
-          <div class="dl-quality-size">${v.format?.toUpperCase() || 'MP4'} ${fmtSize(v.size)}</div>
-        </div>
-        <button class="dl-quality-btn" onclick="startDownload('${encodeURIComponent(v.url)}','${encodeURIComponent((details?.title||'video')+'_'+v.quality+'.mp4')}')">
-          ↓ Download
-        </button>
-      </div>`).join('');
+    list.innerHTML =
+      `<div style="color:var(--text3);font-size:13px;padding:20px 0">
+        No download links available
+      </div>`;
+    return;
   }
 
-  // Subtitles
-  const subs = files?.subtitles || [];
-  const subList = document.getElementById('sub-list');
-  if (subList) {
-    subList.innerHTML = subs.length
-      ? subs.map(s => `
-        <div class="sub-item">
-          <div>
-            <div class="sub-lang">🌐 ${s.language || 'Unknown'}</div>
-            <div class="sub-fmt">${s.format?.toUpperCase() || 'SRT'}</div>
-          </div>
-          <a href="${cymor.proxyUrl(s.url, (s.language||'sub')+'.'+s.format)}" class="dl-quality-btn" style="text-decoration:none">↓ Download</a>
-        </div>`).join('')
-      : '<div style="color:var(--text3);font-size:13px;padding:20px 0">No subtitles available</div>';
-  }
+  list.innerHTML = videos.map((v, i) => `
+    <div class="dl-quality-item">
+      <div>
+        <div class="dl-quality-label">${v.quality || `Option ${i+1}`}</div>
+        <div class="dl-quality-size">
+          ${v.codec ? v.codec.toUpperCase() : 'VIDEO'} ${v.size || ''}
+        </div>
+      </div>
+
+      <button class="dl-quality-btn"
+        onclick="startDownload('${encodeURIComponent(v.magnet || v.url)}',
+                               '${encodeURIComponent((details?.title||'video')+'_'+(v.quality||'file'))}')">
+        ↓ Download
+      </button>
+    </div>
+  `).join('');
 }
 
+/* ---------------- SEASONS ---------------- */
+
 function buildSeasonEpisodePicker(d) {
-  const seasons = d.seasons || 1;
+  const seasons = d?.seasons || 1;
   const tabsEl  = document.getElementById('season-tabs');
   const epEl    = document.getElementById('episode-grid');
+
   if (!tabsEl || !epEl) return;
 
-  // Season tabs
   tabsEl.innerHTML = Array.from({length: seasons}, (_, i) => `
-    <div class="season-tab ${i===0?'active':''}" onclick="selectSeason(${i+1},${d.episodes||12})" data-season="${i+1}">S${i+1}</div>`).join('');
+    <div class="season-tab ${i===0?'active':''}"
+         onclick="selectSeason(${i+1},${d?.episodes||12})">
+      S${i+1}
+    </div>
+  `).join('');
 
-  buildEpisodeGrid(d.episodes || 12);
+  buildEpisodeGrid(d?.episodes || 12);
 }
 
 function selectSeason(s, epCount) {
   currentSeason = s;
   currentEp = 1;
-  document.querySelectorAll('.season-tab').forEach(t => t.classList.toggle('active', parseInt(t.dataset.season) === s));
+
+  document.querySelectorAll('.season-tab')
+    .forEach(t => t.classList.toggle('active',
+      Number(t.textContent.replace('S','')) === s));
+
   buildEpisodeGrid(epCount);
   updateEpLabel();
 }
@@ -320,13 +369,23 @@ function selectSeason(s, epCount) {
 function buildEpisodeGrid(count) {
   const epEl = document.getElementById('episode-grid');
   if (!epEl) return;
+
   epEl.innerHTML = Array.from({length: Math.min(count, 30)}, (_, i) => `
-    <button class="ep-btn ${i===0?'active':''}" onclick="selectEp(${i+1})" data-ep="${i+1}">${i+1}</button>`).join('');
+    <button class="ep-btn ${i===0?'active':''}"
+      onclick="selectEp(${i+1})"
+      data-ep="${i+1}">
+      ${i+1}
+    </button>
+  `).join('');
 }
 
 function selectEp(ep) {
   currentEp = ep;
-  document.querySelectorAll('.ep-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.ep) === ep));
+
+  document.querySelectorAll('.ep-btn')
+    .forEach(b => b.classList.toggle('active',
+      Number(b.dataset.ep) === ep));
+
   updateEpLabel();
 }
 
@@ -336,78 +395,96 @@ function updateEpLabel() {
 }
 
 async function loadEpisodeDownloads() {
-  const loading = document.getElementById('dl-loading');
-  const list    = document.getElementById('dl-list');
-  if (loading) { loading.style.display = 'flex'; }
-  if (list)    { list.style.display = 'none'; }
-  switchTab('downloads');
   try {
     dlFiles = await cymor.episodeDownloads(pageUrl, currentSeason, currentEp);
     renderDownloads(dlFiles);
-    toast(`Loaded S${currentSeason}E${currentEp} links`, 'success');
-  } catch(e) {
-    toast('Could not load episode links', 'error');
+    toast(`Loaded S${currentSeason}E${currentEp}`, 'success');
+  } catch (e) {
+    console.error(e);
+    toast('Episode load failed', 'error');
   }
 }
 
-function startDownload(encodedUrl, encodedName) {
-  const url  = decodeURIComponent(encodedUrl);
-  const name = decodeURIComponent(encodedName);
-  const proxyUrl = cymor.proxyUrl(url, name);
+/* ---------------- ACTIONS ---------------- */
 
-  // Save to downloads list
+function startDownload(url, name) {
+  const realUrl = decodeURIComponent(url);
+  const fileName = decodeURIComponent(name);
+
+  const proxyUrl = cymor.proxyUrl(realUrl, fileName);
+
   store.push('cymor_downloads', {
-    id: url,
+    id: realUrl,
     title: details?.title || 'Download',
     poster: details?.poster || '',
-    quality: name,
+    quality: fileName,
     url: proxyUrl,
-    ts: Date.now(),
-    size: '',
+    ts: Date.now()
   });
 
-  // Trigger download
   const a = document.createElement('a');
   a.href = proxyUrl;
-  a.download = name;
+  a.download = fileName;
   a.click();
 
   toast('Download started ✓', 'success');
 }
 
 function switchTab(tab) {
-  document.querySelectorAll('.tab-pill').forEach((p, i) => {
-    const tabs = ['downloads', 'episodes', 'subtitles'].filter((_, j) => isSeries || j !== 1);
-    p.classList.toggle('active', tabs[i] === tab);
+  const tabs = ['downloads', ...(isSeries ? ['episodes'] : []), 'subtitles'];
+
+  tabs.forEach(t => {
+    document.getElementById(`tab-${t}`)
+      ?.classList.toggle('active', t === tab);
   });
-  ['downloads', ...(isSeries ? ['episodes'] : []), 'subtitles'].forEach(t => {
-    const el = document.getElementById(`tab-${t}`);
-    if (el) el.classList.toggle('active', t === tab);
-  });
+
+  document.querySelectorAll('.tab-pill')
+    .forEach((p, i) => {
+      p.classList.toggle('active',
+        (tabs[i] === tab));
+    });
 }
 
 function toggleDesc() {
-  const desc = document.getElementById('desc');
-  const btn  = document.getElementById('read-more');
-  desc.classList.toggle('expanded');
-  btn.textContent = desc.classList.contains('expanded') ? 'Read less' : 'Read more';
+  const d = document.getElementById('desc');
+  const b = document.getElementById('read-more');
+  if (!d || !b) return;
+
+  d.classList.toggle('expanded');
+  b.textContent = d.classList.contains('expanded')
+    ? 'Read less'
+    : 'Read more';
 }
 
 function scrollToDownloads() {
-  document.getElementById('tab-downloads')?.scrollIntoView({behavior:'smooth'});
+  document.getElementById('tab-downloads')
+    ?.scrollIntoView({behavior:'smooth'});
   switchTab('downloads');
 }
 
 function handleWatchlist() {
-  const item = { id: pageUrl, page_url: pageUrl, title: details?.title, poster: details?.poster, year: details?.year, rating: details?.rating, type };
+  const item = {
+    id: pageUrl,
+    page_url: pageUrl,
+    title: details?.title,
+    poster: details?.poster,
+    year: details?.year,
+    rating: details?.rating,
+    type
+  };
+
   const added = toggleWatchlist(item);
-  const btn = document.getElementById('wl-btn');
-  if (btn) btn.classList.toggle('in-list', added);
+
+  document.getElementById('wl-btn')
+    ?.classList.toggle('in-list', added);
 }
 
 function shareItem() {
   if (navigator.share) {
-    navigator.share({ title: details?.title || 'Movie', url: location.href });
+    navigator.share({
+      title: details?.title || 'Movie',
+      url: location.href
+    });
   } else {
     navigator.clipboard?.writeText(location.href);
     toast('Link copied!', 'success');

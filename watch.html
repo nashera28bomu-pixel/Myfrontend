@@ -32,6 +32,11 @@
   
   .stream-controls { display:flex; gap:10px; margin-bottom:15px; }
   .stream-status { font-size:13px; color:var(--text2); margin-bottom:15px; font-family:monospace; }
+
+  /* More Like This Section */
+  .rec-section { margin-top: 30px; }
+  .rec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+  .rec-item img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 8px; }
 </style>
 </head>
 
@@ -48,20 +53,31 @@ const pageId = params.get('id');
 const type = params.get('type') || 'movie';
 const isSeries = type === 'series';
 
-let details = null, dlFiles = null, currentMagnet = null, destroyStream = null;
+let details = null, currentMagnet = null, destroyStream = null;
 
+/* ─────────────────────────────
+   INITIALIZATION
+───────────────────────────── */
 async function loadDetail() {
   if (!pageId) return;
   try {
     details = isSeries ? await cymor.seriesDetails(pageId) : await cymor.movieDetails(pageId);
     renderMainUI();
-    dlFiles = isSeries ? await cymor.episodeSources(pageId, 1, 1) : await cymor.movieSources(pageId);
-    renderDownloads(dlFiles);
+    
+    // Fetch Sources and Recommendations
+    const sources = isSeries ? await cymor.episodeSources(pageId, 1, 1) : await cymor.movieSources(pageId);
+    renderDownloads(sources);
+    
+    const recs = await cymor.getRecommendations(pageId);
+    renderRecommendations(recs);
   } catch (e) {
     document.getElementById('detail-info').innerHTML = `<h3>Error</h3><p>${e.message}</p>`;
   }
 }
 
+/* ─────────────────────────────
+   UI RENDERING
+───────────────────────────── */
 function renderMainUI() {
   document.getElementById('detail-info').innerHTML = `
     <h2>${details.title}</h2>
@@ -80,6 +96,11 @@ function renderMainUI() {
     <div class="tab-panel active" id="tab-downloads">
       <div id="downloads"></div>
     </div>
+
+    <div class="rec-section">
+      <h3>More Like This</h3>
+      <div class="rec-grid" id="rec-grid"></div>
+    </div>
   `;
 }
 
@@ -96,6 +117,19 @@ function renderDownloads(files) {
     </div>`).join('') : 'No sources found';
 }
 
+function renderRecommendations(list) {
+  const container = document.getElementById('rec-grid');
+  if(!container) return;
+  container.innerHTML = list.map(m => `
+    <a href="watch.html?id=${m.id}&type=${type}" class="rec-item">
+      <img src="${m.poster}" onerror="this.style.display='none'">
+    </a>
+  `).join('');
+}
+
+/* ─────────────────────────────
+   STREAMING LOGIC
+───────────────────────────── */
 function selectStream(magnet) {
   currentMagnet = decodeURIComponent(magnet);
   document.getElementById("stream-status").innerText = "Selected: " + currentMagnet.substring(0, 20) + "...";
@@ -121,7 +155,7 @@ function stopStreaming() {
 }
 
 function downloadFile(url) { window.open(cymor.torrentProxy(decodeURIComponent(url), "video.mp4"), "_blank"); }
-function switchTab(tab) { /* Logic for tabs */ }
+function switchTab(tab) { /* Add custom tab logic here if needed */ }
 
 document.addEventListener('DOMContentLoaded', loadDetail);
 </script>

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Watch — Cymor Movie Hub</title>
+  <meta name="theme-color" content="#080a0f"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .tab-pills { display:flex; gap:8px; margin-bottom:16px; border-bottom:1px solid var(--border); }
+    .tab-pill {
+      padding:10px 16px; font-size:14px; font-weight:600;
+      color:var(--text3); cursor:pointer; border-bottom:2px solid transparent;
+      transition:var(--transition);
+    }
+    .tab-pill.active { color:var(--gold); border-color:var(--gold); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+    .sub-item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 0; border-bottom:1px solid var(--border);
+    }
+    .sub-lang { font-size:14px; font-weight:500; }
+    .sub-fmt  { font-size:12px; color:var(--text3); }
+    .cast-row { display:flex; gap:12px; overflow-x:auto; padding-bottom:8px; }
+    .cast-row::-webkit-scrollbar { display:none; }
+    .cast-chip {
+      flex-shrink:0;
+      padding:8px 14px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius-sm);
+      font-size:12px; color:var(--text2);
+      white-space:nowrap;
+    }
+    .share-btn {
+      position:absolute; top:16px; right:62px;
+      width:40px; height:40px;
+      background:rgba(0,0,0,0.6);
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--text); font-size:18px;
+      backdrop-filter:blur(8px);
+      cursor:pointer; transition:var(--transition);
+    }
+    .share-btn:hover { background:rgba(232,184,75,0.2); color:var(--gold); }
+    .wl-btn {
+      position:absolute; top:16px; right:16px;
+      width:40px; height:40px;
+      background:rgba(0,0,0,0.6);
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--text); font-size:18px;
+      backdrop-filter:blur(8px);
+      cursor:pointer; transition:var(--transition);
+    }
+    .wl-btn.in-list { color:var(--gold); }
+    .section-divider { height:1px; background:var(--border); margin:20px 0; }
+    .dl-quality-row { display:flex; flex-direction:column; gap:10px; }
+    .dl-quality-item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      transition:var(--transition);
+    }
+    .dl-quality-item:hover { border-color:var(--gold-dim); }
+    .dl-quality-label { font-weight:600; font-size:15px; }
+    .dl-quality-size  { font-size:12px; color:var(--text3); margin-top:2px; }
+    .dl-quality-btn {
+      background:var(--gold);
+      color:var(--bg);
+      font-weight:700; font-size:13px;
+      padding:8px 16px;
+      border-radius:99px;
+      cursor:pointer; transition:var(--transition);
+      display:flex; align-items:center; gap:6px;
+    }
+    .dl-quality-btn:hover { background:var(--gold2); }
+    .skeleton-detail-hero { height:65vw; max-height:400px; min-height:240px; }
+  </style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-logo">C</div>
+  <div class="splash-title">Cymor Movie Hub</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+
+<nav class="navbar">
+  <a href="javascript:history.back()" class="nav-logo" style="gap:6px">
+    <div class="nav-logo-mark" style="background:var(--card);border:1px solid var(--border)">←</div>
+    <span class="nav-logo-text" style="font-size:16px">Back</span>
+  </a>
+  <div style="flex:1"></div>
+</nav>
+
+<div class="page-content">
+  <!-- Hero -->
+  <div class="detail-hero" id="detail-hero">
+    <div class="skeleton skeleton-detail-hero"></div>
+  </div>
+
+  <!-- Info -->
+  <div class="detail-info" id="detail-info">
+    <div class="loading-center"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<nav class="tabbar">
+  <a href="index.html" class="tab-item" data-tab="home">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    Home
+  </a>
+  <a href="search.html" class="tab-item" data-tab="search">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    Search
+  </a>
+  <a href="downloads.html" class="tab-item" data-tab="downloads">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Downloads
+  </a>
+  <a href="watchlist.html" class="tab-item" data-tab="watchlist">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+    Watchlist
+  </a>
+  <a href="settings.html" class="tab-item" data-tab="settings">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Settings
+  </a>
+</nav>
+
+<div id="toast-container"></div>
+<script src="app.js"></script>
+<script>
+const params   = new URLSearchParams(location.search);
+const pageUrl  = params.get('url')  || '';
+const type     = params.get('type') || 'movie';
+const isSeries = type === 'series';
+
+let details       = null;
+let dlFiles       = null;
+let currentSeason = 1;
+let currentEp     = 1;
+
+async function loadDetail() {
+  if (!pageUrl) { document.getElementById('detail-info').innerHTML = '<div class="empty-state"><div class="empty-icon">😕</div><div class="empty-title">No content found</div></div>'; return; }
+
+  try {
+    // Fetch details
+    details = isSeries ? await cymor.seriesDetails(pageUrl) : await cymor.movieDetails(pageUrl);
+    renderHero(details);
+    renderInfo(details);
+
+    // Fetch download links
+    if (isSeries) {
+      dlFiles = await cymor.episodeDownloads(pageUrl, currentSeason, currentEp);
+    } else {
+      dlFiles = await cymor.movieDownloads(pageUrl);
+    }
+    renderDownloads(dlFiles);
+
+  } catch (e) {
+    document.getElementById('detail-info').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load</div><div class="empty-sub">${e.message}</div><button class="btn-primary" style="margin-top:16px" onclick="loadDetail()">Retry</button></div>`;
+    toast('Could not load details', 'error');
+  }
+}
+
+function renderHero(d) {
+  const heroEl = document.getElementById('detail-hero');
+  const bg = d.poster || d.backdrop || '';
+  heroEl.innerHTML = `
+    ${bg ? `<img class="detail-hero-bg" src="${bg}" onerror="this.style.display='none'">` : '<div class="detail-hero-bg" style="background:var(--bg3)"></div>'}
+    <div class="detail-hero-gradient"></div>
+    <div class="detail-back" onclick="history.back()">←</div>
+    <div class="share-btn" onclick="shareItem()">⬆</div>
+    <div class="wl-btn ${isInWatchlist(pageUrl) ? 'in-list' : ''}" id="wl-btn" onclick="handleWatchlist()">
+      ${isInWatchlist(pageUrl) ? '🔖' : '🔖'}
+    </div>`;
+}
+
+function renderInfo(d) {
+  const genres = (d.genres || []).join(', ') || 'N/A';
+  const cast   = (d.cast || []).slice(0, 10);
+  document.title = `${d.title || 'Watch'} — Cymor Movie Hub`;
+
+  document.getElementById('detail-info').innerHTML = `
+    <div class="detail-poster-row">
+      ${d.poster
+        ? `<img class="detail-poster" src="${d.poster}" onerror="this.outerHTML='<div class=detail-poster-fallback>🎬</div>'">`
+        : `<div class="detail-poster-fallback">🎬</div>`}
+      <div>
+        <div class="detail-title">${d.title || 'Unknown Title'}</div>
+      </div>
+    </div>
+
+    <div class="detail-meta-chips">
+      ${d.year     ? `<div class="meta-chip">${d.year}</div>` : ''}
+      ${d.rating   ? `<div class="meta-chip gold">⭐ ${parseFloat(d.rating).toFixed(1)}</div>` : ''}
+      ${d.duration ? `<div class="meta-chip">⏱ ${d.duration}</div>` : ''}
+      ${d.language ? `<div class="meta-chip">🌐 ${d.language}</div>` : ''}
+      ${genres     ? `<div class="meta-chip">${genres}</div>` : ''}
+    </div>
+
+    ${d.description ? `
+      <div class="detail-desc" id="desc">${d.description}</div>
+      <div class="read-more" id="read-more" onclick="toggleDesc()">Read more</div>
+    ` : ''}
+
+    <div class="detail-actions">
+      <button class="btn-watch" onclick="scrollToDownloads()">▼ Get Download Link</button>
+      <button class="btn-dl" onclick="handleWatchlist()">🔖 Watchlist</button>
+    </div>
+
+    ${cast.length ? `
+      <div style="margin-bottom:20px">
+        <div class="quality-title">Cast</div>
+        <div class="cast-row">${cast.map(c => `<div class="cast-chip">${c}</div>`).join('')}</div>
+      </div>` : ''}
+
+    <!-- Tabs -->
+    <div class="tab-pills">
+      <div class="tab-pill active" onclick="switchTab('downloads')">Downloads</div>
+      ${isSeries ? `<div class="tab-pill" onclick="switchTab('episodes')">Episodes</div>` : ''}
+      <div class="tab-pill" onclick="switchTab('subtitles')">Subtitles</div>
+    </div>
+
+    <!-- Downloads tab -->
+    <div class="tab-panel active" id="tab-downloads">
+      <div id="dl-loading" class="loading-center"><div class="spinner"></div></div>
+      <div class="dl-quality-row" id="dl-list" style="display:none"></div>
+    </div>
+
+    <!-- Episodes tab -->
+    ${isSeries ? `
+    <div class="tab-panel" id="tab-episodes">
+      <div class="season-tabs" id="season-tabs"></div>
+      <div class="episode-grid" id="episode-grid"></div>
+      <div style="margin-top:16px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text2)">
+        Selected: <b style="color:var(--gold)" id="ep-label">S${currentSeason} E${currentEp}</b>
+        <button class="btn-primary" style="margin-top:12px;width:100%;justify-content:center" onclick="loadEpisodeDownloads()">▼ Get Episode Links</button>
+      </div>
+    </div>` : ''}
+
+    <!-- Subtitles tab -->
+    <div class="tab-panel" id="tab-subtitles">
+      <div id="sub-list"><div style="color:var(--text3);font-size:13px">Loading subtitles…</div></div>
+    </div>`;
+
+  // Build season/episode grids for series
+  if (isSeries && d.seasons) {
+    buildSeasonEpisodePicker(d);
+  }
+}
+
+function renderDownloads(files) {
+  const loading = document.getElementById('dl-loading');
+  const list    = document.getElementById('dl-list');
+  if (!loading || !list) return;
+
+  loading.style.display = 'none';
+  list.style.display    = 'flex';
+
+  const videos = files?.videos || [];
+  if (!videos.length) {
+    list.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:20px 0">No download links available for this title</div>';
+  } else {
+    list.innerHTML = videos.map((v, i) => `
+      <div class="dl-quality-item">
+        <div>
+          <div class="dl-quality-label">${v.quality || `Option ${i+1}`}</div>
+          <div class="dl-quality-size">${v.format?.toUpperCase() || 'MP4'} ${fmtSize(v.size)}</div>
+        </div>
+        <button class="dl-quality-btn" onclick="startDownload('${encodeURIComponent(v.url)}','${encodeURIComponent((details?.title||'video')+'_'+v.quality+'.mp4')}')">
+          ↓ Download
+        </button>
+      </div>`).join('');
+  }
+
+  // Subtitles
+  const subs = files?.subtitles || [];
+  const subList = document.getElementById('sub-list');
+  if (subList) {
+    subList.innerHTML = subs.length
+      ? subs.map(s => `
+        <div class="sub-item">
+          <div>
+            <div class="sub-lang">🌐 ${s.language || 'Unknown'}</div>
+            <div class="sub-fmt">${s.format?.toUpperCase() || 'SRT'}</div>
+          </div>
+          <a href="${cymor.proxyUrl(s.url, (s.language||'sub')+'.'+s.format)}" class="dl-quality-btn" style="text-decoration:none">↓ Download</a>
+        </div>`).join('')
+      : '<div style="color:var(--text3);font-size:13px;padding:20px 0">No subtitles available</div>';
+  }
+}
+
+function buildSeasonEpisodePicker(d) {
+  const seasons = d.seasons || 1;
+  const tabsEl  = document.getElementById('season-tabs');
+  const epEl    = document.getElementById('episode-grid');
+  if (!tabsEl || !epEl) return;
+
+  // Season tabs
+  tabsEl.innerHTML = Array.from({length: seasons}, (_, i) => `
+    <div class="season-tab ${i===0?'active':''}" onclick="selectSeason(${i+1},${d.episodes||12})" data-season="${i+1}">S${i+1}</div>`).join('');
+
+  buildEpisodeGrid(d.episodes || 12);
+}
+
+function selectSeason(s, epCount) {
+  currentSeason = s;
+  currentEp = 1;
+  document.querySelectorAll('.season-tab').forEach(t => t.classList.toggle('active', parseInt(t.dataset.season) === s));
+  buildEpisodeGrid(epCount);
+  updateEpLabel();
+}
+
+function buildEpisodeGrid(count) {
+  const epEl = document.getElementById('episode-grid');
+  if (!epEl) return;
+  epEl.innerHTML = Array.from({length: Math.min(count, 30)}, (_, i) => `
+    <button class="ep-btn ${i===0?'active':''}" onclick="selectEp(${i+1})" data-ep="${i+1}">${i+1}</button>`).join('');
+}
+
+function selectEp(ep) {
+  currentEp = ep;
+  document.querySelectorAll('.ep-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.ep) === ep));
+  updateEpLabel();
+}
+
+function updateEpLabel() {
+  const lbl = document.getElementById('ep-label');
+  if (lbl) lbl.textContent = `S${currentSeason} E${currentEp}`;
+}
+
+async function loadEpisodeDownloads() {
+  const loading = document.getElementById('dl-loading');
+  const list    = document.getElementById('dl-list');
+  if (loading) { loading.style.display = 'flex'; }
+  if (list)    { list.style.display = 'none'; }
+  switchTab('downloads');
+  try {
+    dlFiles = await cymor.episodeDownloads(pageUrl, currentSeason, currentEp);
+    renderDownloads(dlFiles);
+    toast(`Loaded S${currentSeason}E${currentEp} links`, 'success');
+  } catch(e) {
+    toast('Could not load episode links', 'error');
+  }
+}
+
+function startDownload(encodedUrl, encodedName) {
+  const url  = decodeURIComponent(encodedUrl);
+  const name = decodeURIComponent(encodedName);
+  const proxyUrl = cymor.proxyUrl(url, name);
+
+  // Save to downloads list
+  store.push('cymor_downloads', {
+    id: url,
+    title: details?.title || 'Download',
+    poster: details?.poster || '',
+    quality: name,
+    url: proxyUrl,
+    ts: Date.now(),
+    size: '',
+  });
+
+  // Trigger download
+  const a = document.createElement('a');
+  a.href = proxyUrl;
+  a.download = name;
+  a.click();
+
+  toast('Download started ✓', 'success');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-pill').forEach((p, i) => {
+    const tabs = ['downloads', 'episodes', 'subtitles'].filter((_, j) => isSeries || j !== 1);
+    p.classList.toggle('active', tabs[i] === tab);
+  });
+  ['downloads', ...(isSeries ? ['episodes'] : []), 'subtitles'].forEach(t => {
+    const el = document.getElementById(`tab-${t}`);
+    if (el) el.classList.toggle('active', t === tab);
+  });
+}
+
+function toggleDesc() {
+  const desc = document.getElementById('desc');
+  const btn  = document.getElementById('read-more');
+  desc.classList.toggle('expanded');
+  btn.textContent = desc.classList.contains('expanded') ? 'Read less' : 'Read more';
+}
+
+function scrollToDownloads() {
+  document.getElementById('tab-downloads')?.scrollIntoView({behavior:'smooth'});
+  switchTab('downloads');
+}
+
+function handleWatchlist() {
+  const item = { id: pageUrl, page_url: pageUrl, title: details?.title, poster: details?.poster, year: details?.year, rating: details?.rating, type };
+  const added = toggleWatchlist(item);
+  const btn = document.getElementById('wl-btn');
+  if (btn) btn.classList.toggle('in-list', added);
+}
+
+function shareItem() {
+  if (navigator.share) {
+    navigator.share({ title: details?.title || 'Movie', url: location.href });
+  } else {
+    navigator.clipboard?.writeText(location.href);
+    toast('Link copied!', 'success');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadDetail);
+</script>
+</body>
+</html>

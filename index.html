@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Cymor Movie Hub</title>
+  <meta name="description" content="Watch and download movies & TV series free on Cymor Movie Hub"/>
+  <meta name="theme-color" content="#080a0f"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" href="icon.png" type="image/png"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .hero-slide-counter {
+      position:absolute;top:16px;right:16px;
+      background:rgba(0,0,0,0.55);
+      color:#fff;font-size:12px;font-weight:600;
+      padding:4px 10px;border-radius:99px;
+      backdrop-filter:blur(6px);
+      letter-spacing:0.05em;
+    }
+    .live-badge {
+      display:inline-flex;align-items:center;gap:5px;
+      font-size:11px;color:var(--green);font-weight:600;
+      letter-spacing:0.08em;text-transform:uppercase;
+    }
+    .live-dot {
+      width:6px;height:6px;border-radius:50%;
+      background:var(--green);
+      animation:blink 1.2s ease infinite;
+    }
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+    .continue-row .movie-card-poster{width:100%;height:110px;border-radius:10px;}
+    .continue-row .movie-card{width:180px;}
+    .continue-row .movie-card-poster img{object-position:center top;}
+    .continue-progress{height:3px;background:var(--bg3);border-radius:99px;margin-top:6px;overflow:hidden;}
+    .continue-progress-fill{height:100%;background:var(--gold);border-radius:99px;}
+    .section-head-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-top:8px;}
+    .banner-ad{
+      margin:0 16px 24px;
+      padding:16px 20px;
+      background:linear-gradient(135deg,rgba(232,184,75,0.08),rgba(232,184,75,0.03));
+      border:1px solid rgba(232,184,75,0.15);
+      border-radius:var(--radius);
+      display:flex;align-items:center;gap:14px;
+    }
+    .banner-ad-icon{font-size:32px;}
+    .banner-ad-text h4{font-size:14px;font-weight:600;color:var(--gold);margin-bottom:2px;}
+    .banner-ad-text p{font-size:12px;color:var(--text3);}
+  </style>
+</head>
+<body>
+
+<!-- Splash -->
+<div id="splash">
+  <div class="splash-logo">C</div>
+  <div class="splash-title">Cymor Movie Hub</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-mark">C</div>
+    <span class="nav-logo-text">CYMOR</span>
+  </a>
+  <div class="nav-search">
+    <svg class="nav-search-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="search" placeholder="Search movies, series…"/>
+  </div>
+  <div class="nav-actions">
+    <a href="watchlist.html" class="nav-btn" title="Watchlist">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<!-- Hero Slider -->
+<div class="page-content">
+  <div class="hero" id="hero">
+    <div class="loading-center" style="height:100%"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Trending Movies -->
+  <div class="section" style="padding-top:20px">
+    <div class="section-header">
+      <div class="section-title">🔥 Trending Movies</div>
+      <a href="search.html?type=movie" class="section-link">See all ›</a>
+    </div>
+    <div class="scroll-row" id="trending-movies">
+      ${Array(6).fill(`<div class="skeleton-card"><div class="skeleton skeleton-poster"></div><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-year"></div></div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Genre Pills -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">🎭 Browse Genres</div>
+    </div>
+    <div class="genre-row" id="genre-row">
+      <div class="genre-pill active" data-genre="all">All</div>
+      <div class="genre-pill" data-genre="action">Action</div>
+      <div class="genre-pill" data-genre="comedy">Comedy</div>
+      <div class="genre-pill" data-genre="drama">Drama</div>
+      <div class="genre-pill" data-genre="horror">Horror</div>
+      <div class="genre-pill" data-genre="sci-fi">Sci-Fi</div>
+      <div class="genre-pill" data-genre="romance">Romance</div>
+      <div class="genre-pill" data-genre="thriller">Thriller</div>
+      <div class="genre-pill" data-genre="animation">Animation</div>
+      <div class="genre-pill" data-genre="documentary">Documentary</div>
+    </div>
+  </div>
+
+  <!-- Trending Series -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📺 Trending Series</div>
+      <a href="search.html?type=series" class="section-link">See all ›</a>
+    </div>
+    <div class="scroll-row" id="trending-series">
+      ${Array(6).fill(`<div class="skeleton-card"><div class="skeleton skeleton-poster"></div><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-year"></div></div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Promo Banner -->
+  <div class="banner-ad">
+    <div class="banner-ad-icon">⚡</div>
+    <div class="banner-ad-text">
+      <h4>Download for Offline Viewing</h4>
+      <p>Save movies to watch anytime — no internet needed</p>
+    </div>
+  </div>
+
+  <!-- Recently Viewed -->
+  <div class="section" id="history-section" style="display:none">
+    <div class="section-header">
+      <div class="section-title">🕐 Recently Viewed</div>
+      <span class="section-link" onclick="clearHistory()" style="cursor:pointer">Clear</span>
+    </div>
+    <div class="scroll-row" id="history-row"></div>
+  </div>
+
+  <!-- Watchlist Preview -->
+  <div class="section" id="watchlist-section" style="display:none">
+    <div class="section-header">
+      <div class="section-title">🔖 My Watchlist</div>
+      <a href="watchlist.html" class="section-link">View all ›</a>
+    </div>
+    <div class="scroll-row" id="watchlist-row"></div>
+  </div>
+
+</div><!-- end page-content -->
+
+<!-- Bottom Tab Bar -->
+<nav class="tabbar">
+  <a href="index.html" class="tab-item active" data-tab="home">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    Home
+  </a>
+  <a href="search.html" class="tab-item" data-tab="search">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    Search
+  </a>
+  <a href="downloads.html" class="tab-item" data-tab="downloads">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Downloads
+  </a>
+  <a href="watchlist.html" class="tab-item" data-tab="watchlist">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+    Watchlist
+  </a>
+  <a href="settings.html" class="tab-item" data-tab="settings">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Settings
+  </a>
+</nav>
+
+<div id="toast-container"></div>
+
+<script src="app.js"></script>
+<script>
+/* ── Hero Slider State ── */
+let heroItems = [];
+let heroIdx = 0;
+let heroTimer = null;
+
+function buildHero(items) {
+  heroItems = items;
+  const hero = document.getElementById('hero');
+  hero.innerHTML = '';
+
+  items.forEach((item, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'hero-slide' + (i === 0 ? ' active' : '');
+    const posterSrc = item.poster || '';
+    slide.innerHTML = `
+      ${posterSrc
+        ? `<img class="hero-bg" src="${posterSrc}" alt="${item.title}" onerror="this.style.display='none'">`
+        : `<div class="hero-bg-fallback"></div>`}
+      <div class="hero-gradient"></div>
+      <div class="hero-content">
+        <div class="hero-badge">⭐ ${item.rating ? parseFloat(item.rating).toFixed(1) : 'N/A'} &nbsp;•&nbsp; ${item.year || ''}</div>
+        <div class="hero-title">${item.title || 'Unknown'}</div>
+        <div class="hero-meta">
+          <span class="hero-rating">Trending #${i + 1}</span>
+          ${item.type === 'tv' || item.type === 'series' ? '<span>TV Series</span>' : '<span>Movie</span>'}
+        </div>
+        <div class="hero-actions">
+          <button class="btn-primary" onclick='goToDetail(${JSON.stringify(item)})'>▶ Watch Now</button>
+          <button class="btn-secondary" onclick='goToDetail(${JSON.stringify(item)})'>ℹ Info</button>
+        </div>
+      </div>
+      <div class="hero-slide-counter">${i + 1} / ${items.length}</div>`;
+    hero.appendChild(slide);
+  });
+
+  // Dots
+  const dots = document.createElement('div');
+  dots.className = 'hero-dots';
+  items.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'hero-dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goToSlide(i);
+    dots.appendChild(d);
+  });
+  hero.appendChild(dots);
+
+  startHeroTimer();
+}
+
+function goToSlide(idx) {
+  const slides = document.querySelectorAll('.hero-slide');
+  const ddots  = document.querySelectorAll('.hero-dot');
+  slides[heroIdx]?.classList.remove('active');
+  ddots[heroIdx]?.classList.remove('active');
+  heroIdx = (idx + heroItems.length) % heroItems.length;
+  slides[heroIdx]?.classList.add('active');
+  ddots[heroIdx]?.classList.add('active');
+}
+
+function startHeroTimer() {
+  clearInterval(heroTimer);
+  heroTimer = setInterval(() => goToSlide(heroIdx + 1), 5000);
+}
+
+/* ── Load Trending ── */
+async function loadHome() {
+  try {
+    const data = await cymor.trending();
+
+    // Hero — use movies first
+    const heroSource = [...(data.movies || []), ...(data.series || [])].slice(0, 6);
+    if (heroSource.length) buildHero(heroSource);
+    else document.getElementById('hero').innerHTML = '<div class="hero-bg-fallback" style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:18px;">No trending content</div>';
+
+    // Movies row
+    const moviesEl = document.getElementById('trending-movies');
+    if (data.movies?.length) {
+      moviesEl.innerHTML = data.movies.map(m => movieCardHTML(m)).join('');
+    } else {
+      moviesEl.innerHTML = '<div style="color:var(--text3);padding:20px">Nothing loaded yet</div>';
+    }
+
+    // Series row
+    const seriesEl = document.getElementById('trending-series');
+    if (data.series?.length) {
+      seriesEl.innerHTML = data.series.map(s => movieCardHTML(s)).join('');
+    } else {
+      seriesEl.innerHTML = '<div style="color:var(--text3);padding:20px">Nothing loaded yet</div>';
+    }
+  } catch (e) {
+    document.getElementById('hero').innerHTML = `<div class="hero-bg-fallback" style="height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px"><div style="font-size:40px">🎬</div><div style="color:var(--text3)">Connecting to server…</div><div style="color:var(--text3);font-size:12px">Free tier may take 30s to wake up</div></div>`;
+    document.getElementById('trending-movies').innerHTML = '<div style="color:var(--text3);padding:20px;font-size:13px">Server waking up, please refresh shortly</div>';
+    document.getElementById('trending-series').innerHTML = '';
+    toast('Server is waking up — refresh in 30s', 'error');
+  }
+}
+
+/* ── Genre filter (re-search by genre) ── */
+document.getElementById('genre-row').addEventListener('click', e => {
+  const pill = e.target.closest('.genre-pill');
+  if (!pill) return;
+  document.querySelectorAll('.genre-pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  const genre = pill.dataset.genre;
+  if (genre !== 'all') {
+    window.location.href = `search.html?q=${encodeURIComponent(genre)}`;
+  }
+});
+
+/* ── History ── */
+function loadHistory() {
+  const history = store.get('cymor_history', []).slice(0, 10);
+  if (!history.length) return;
+  document.getElementById('history-section').style.display = 'block';
+  document.getElementById('history-row').innerHTML = history.map(item => movieCardHTML(item)).join('');
+}
+function clearHistory() {
+  store.set('cymor_history', []);
+  document.getElementById('history-section').style.display = 'none';
+  toast('History cleared');
+}
+
+/* ── Watchlist Preview ── */
+function loadWatchlistPreview() {
+  const wl = store.get('cymor_watchlist', []).slice(0, 8);
+  if (!wl.length) return;
+  document.getElementById('watchlist-section').style.display = 'block';
+  document.getElementById('watchlist-row').innerHTML = wl.map(item => movieCardHTML(item)).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadHome();
+  loadHistory();
+  loadWatchlistPreview();
+});
+</script>
+</body>
+</html>

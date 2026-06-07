@@ -12,16 +12,46 @@
 .tab-pill.active{color:var(--gold);border-color:var(--gold)}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
-.cast-row{display:flex;gap:10px;overflow-x:auto}
-.cast-chip{padding:6px 10px;background:var(--card);border-radius:8px;white-space:nowrap}
-.dl-quality-item{display:flex;justify-content:space-between;padding:10px;border:1px solid var(--border);margin-bottom:8px;border-radius:8px}
-.dl-quality-btn{background:var(--gold);padding:6px 10px;border-radius:20px;cursor:pointer}
+
+.dl-quality-item{
+  display:flex;justify-content:space-between;
+  padding:10px;border:1px solid var(--border);
+  margin-bottom:8px;border-radius:8px;
+}
+
+.dl-quality-btn{
+  background:var(--gold);
+  padding:6px 10px;
+  border-radius:20px;
+  cursor:pointer;
+  border:none;
+  font-weight:600;
+}
+
+#videoPlayer{
+  width:100%;
+  max-height:360px;
+  background:black;
+  border-radius:12px;
+  margin-bottom:10px;
+}
+.stream-bar{
+  display:flex;
+  gap:10px;
+  margin-bottom:10px;
+}
+.stream-status{
+  font-size:12px;
+  color:var(--text3);
+  margin-bottom:10px;
+}
 </style>
 </head>
 
 <body>
 
 <div id="detail-hero"></div>
+
 <div id="detail-info">
   <div style="padding:20px">Loading...</div>
 </div>
@@ -31,9 +61,8 @@
 <script>
 const params = new URLSearchParams(location.search);
 
-/* 🔥 FIX 1: use ID ONLY */
 const pageId = params.get('id');
-const type   = params.get('type') || 'movie';
+const type = params.get('type') || 'movie';
 const isSeries = type === 'series';
 
 let details = null;
@@ -41,6 +70,12 @@ let dlFiles = null;
 let currentSeason = 1;
 let currentEp = 1;
 
+let currentMagnet = null;
+let destroyStream = null;
+
+/* ─────────────────────────────
+   LOAD DATA
+───────────────────────────── */
 async function loadDetail() {
   if (!pageId) {
     document.getElementById('detail-info').innerHTML =
@@ -49,12 +84,11 @@ async function loadDetail() {
   }
 
   try {
-    /* 🔥 FIX 2: correct API call */
     details = isSeries
       ? await cymor.seriesDetails(pageId)
       : await cymor.movieDetails(pageId);
 
-    if (!details) throw new Error("Empty response from backend");
+    if (!details) throw new Error("Empty response");
 
     renderUI();
 
@@ -67,10 +101,13 @@ async function loadDetail() {
   } catch (e) {
     console.error(e);
     document.getElementById('detail-info').innerHTML =
-      `<h3>Failed to load content</h3><p>${e.message}</p>`;
+      `<h3>Failed to load</h3><p>${e.message}</p>`;
   }
 }
 
+/* ─────────────────────────────
+   UI
+───────────────────────────── */
 function renderUI() {
   document.title = details.title;
 
@@ -81,6 +118,17 @@ function renderUI() {
   document.getElementById('detail-info').innerHTML = `
     <h2>${details.title}</h2>
 
+    <!-- 🎬 STREAM PLAYER -->
+    <video id="videoPlayer" controls></video>
+
+    <div class="stream-bar">
+      <button class="dl-quality-btn" onclick="startStreaming()">▶ Watch Now</button>
+      <button class="dl-quality-btn" onclick="stopStreaming()">⛔ Stop</button>
+    </div>
+
+    <div id="stream-status" class="stream-status"></div>
+
+    <!-- TABS -->
     <div class="tab-pills">
       <div class="tab-pill active" onclick="switchTab('downloads')">Downloads</div>
       ${isSeries ? `<div class="tab-pill" onclick="switchTab('episodes')">Episodes</div>` : ''}
@@ -97,6 +145,9 @@ function renderUI() {
   `;
 }
 
+/* ─────────────────────────────
+   DOWNLOADS + MAGNET SELECT
+───────────────────────────── */
 function renderDownloads(files) {
   const box = document.getElementById('downloads');
   if (!box) return;
@@ -108,32 +159,112 @@ function renderDownloads(files) {
     return;
   }
 
-  box.innerHTML = list.map(v => `
-    <div class="dl-quality-item">
-      <div>${v.quality || 'HD'}</div>
-      <button class="dl-quality-btn"
-        onclick="downloadFile('${encodeURIComponent(v.url || v.magnet)}')">
-        Download
-      </button>
-    </div>
-  `).join('');
+  box.innerHTML = list.map(v => {
+    const magnet = v.magnet || v.url;
+
+    return `
+      <div class="dl-quality-item">
+        <div>${v.quality || 'HD'}</div>
+
+        <div style="display:flex;gap:8px;">
+          <button class="dl-quality-btn"
+            onclick="selectStream('${encodeURIComponent(magnet)}')">
+            ▶ Select
+          </button>
+
+          <button class="dl-quality-btn"
+            onclick="downloadFile('${encodeURIComponent(magnet)}')">
+            ⬇
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
+/* ─────────────────────────────
+   STREAM LOGIC (WEBTORRENT)
+───────────────────────────── */
+function selectStream(magnet) {
+  currentMagnet = decodeURIComponent(magnet);
+  document.getElementById("stream-status").innerText =
+    "Selected source ready ▶ click Watch Now";
+}
+
+function startStreaming() {
+  if (!currentMagnet) {
+    alert("Select a source first");
+    return;
+  }
+
+  const video = document.getElementById("videoPlayer");
+  const status = document.getElementById("stream-status");
+
+  if (destroyStream) destroyStream();
+
+  status.innerText = "Connecting...";
+
+  destroyStream = streamMagnet(
+    currentMagnet,
+    "videoPlayer",
+    (p) => {
+      status.innerText =
+        `Peers: ${p.peers} | ${p.progress}% | ${fmtSpeed(p.downloadSpeed)}`;
+    },
+    () => {
+      status.innerText = "Playing ▶";
+      video.play();
+    },
+    (err) => {
+      console.error(err);
+      status.innerText = "Stream error: " + err;
+    }
+  );
+}
+
+function stopStreaming() {
+  const video = document.getElementById("videoPlayer");
+
+  if (destroyStream) destroyStream();
+  destroyStream = null;
+  currentMagnet = null;
+
+  if (video) {
+    video.pause();
+    video.removeAttribute("src");
+    video.load();
+  }
+
+  document.getElementById("stream-status").innerText = "Stopped";
+}
+
+/* ─────────────────────────────
+   DOWNLOAD FALLBACK
+───────────────────────────── */
 function downloadFile(url) {
   const real = decodeURIComponent(url);
   window.open(cymor.torrentProxy(real, "video.mp4"), "_blank");
 }
 
+/* ─────────────────────────────
+   EPISODES
+───────────────────────────── */
 async function loadEpisode() {
   dlFiles = await cymor.episodeSources(pageId, currentSeason, currentEp);
   renderDownloads(dlFiles);
 }
 
+/* ─────────────────────────────
+   TABS
+───────────────────────────── */
 function switchTab(tab) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
 }
 
+/* ─────────────────────────────
+   INIT
+───────────────────────────── */
 document.addEventListener('DOMContentLoaded', loadDetail);
 </script>
 

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Downloads — Cymor Movie Hub</title>
+  <meta name="theme-color" content="#080a0f"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .dl-header {
+      padding: 20px 16px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dl-header-title { font-size: 22px; font-weight: 700; }
+    .dl-clear {
+      font-size: 13px; color: var(--red);
+      font-weight: 600; cursor: pointer;
+    }
+    .dl-stats {
+      display: flex; gap: 12px;
+      padding: 0 16px 20px;
+    }
+    .dl-stat {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      text-align: center;
+    }
+    .dl-stat-num { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--gold); }
+    .dl-stat-label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; }
+    .dl-list { padding: 0 16px; }
+    .dl-item-actions { display:flex; gap:8px; }
+    .dl-open-btn {
+      background: var(--gold);
+      color: var(--bg);
+      font-weight: 700; font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      cursor: pointer; transition: var(--transition);
+      text-decoration: none; display:inline-flex; align-items:center; gap:4px;
+    }
+    .dl-open-btn:hover { background: var(--gold2); }
+    .dl-delete-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(232,75,75,0.1);
+      border: 1px solid rgba(232,75,75,0.2);
+      color: var(--red);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 14px;
+      transition: var(--transition);
+    }
+    .dl-delete-btn:hover { background: rgba(232,75,75,0.2); }
+    .dl-empty {
+      padding: 80px 24px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 16px; text-align: center;
+    }
+    .dl-empty-icon { font-size: 64px; opacity: 0.3; }
+    .dl-empty-title { font-size: 20px; font-weight: 600; color: var(--text2); }
+    .dl-empty-sub   { font-size: 14px; color: var(--text3); max-width: 260px; }
+    .dl-time { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-logo">C</div>
+  <div class="splash-title">Cymor Movie Hub</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-mark">C</div>
+    <span class="nav-logo-text">CYMOR</span>
+  </a>
+  <div style="flex:1"></div>
+</nav>
+
+<div class="page-content">
+  <div class="dl-header">
+    <div class="dl-header-title">📥 Downloads</div>
+    <span class="dl-clear" onclick="clearAllDownloads()">Clear All</span>
+  </div>
+
+  <!-- Stats -->
+  <div class="dl-stats">
+    <div class="dl-stat">
+      <div class="dl-stat-num" id="stat-total">0</div>
+      <div class="dl-stat-label">Total</div>
+    </div>
+    <div class="dl-stat">
+      <div class="dl-stat-num" id="stat-movies">0</div>
+      <div class="dl-stat-label">Movies</div>
+    </div>
+    <div class="dl-stat">
+      <div class="dl-stat-num" id="stat-series">0</div>
+      <div class="dl-stat-label">Series</div>
+    </div>
+  </div>
+
+  <!-- Downloads list -->
+  <div class="dl-list" id="dl-list"></div>
+</div>
+
+<nav class="tabbar">
+  <a href="index.html" class="tab-item" data-tab="home">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    Home
+  </a>
+  <a href="search.html" class="tab-item" data-tab="search">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    Search
+  </a>
+  <a href="downloads.html" class="tab-item active" data-tab="downloads">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Downloads
+  </a>
+  <a href="watchlist.html" class="tab-item" data-tab="watchlist">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+    Watchlist
+  </a>
+  <a href="settings.html" class="tab-item" data-tab="settings">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Settings
+  </a>
+</nav>
+
+<div id="toast-container"></div>
+<script src="app.js"></script>
+<script>
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h/24)}d ago`;
+}
+
+function loadDownloads() {
+  const downloads = store.get('cymor_downloads', []);
+  const list = document.getElementById('dl-list');
+
+  document.getElementById('stat-total').textContent   = downloads.length;
+  document.getElementById('stat-movies').textContent  = downloads.filter(d => d.type !== 'series').length;
+  document.getElementById('stat-series').textContent  = downloads.filter(d => d.type === 'series').length;
+
+  if (!downloads.length) {
+    list.innerHTML = `
+      <div class="dl-empty">
+        <div class="dl-empty-icon">📭</div>
+        <div class="dl-empty-title">No downloads yet</div>
+        <div class="dl-empty-sub">Start downloading movies and series from the watch page</div>
+        <a href="index.html" class="btn-primary" style="margin-top:8px">Browse Content</a>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = downloads.map(item => `
+    <div class="dl-item" id="dl-${CSS.escape(item.id)}">
+      ${item.poster
+        ? `<img class="dl-poster" src="${item.poster}" onerror="this.style.display='none'">`
+        : `<div class="dl-poster" style="display:flex;align-items:center;justify-content:center;font-size:28px">🎬</div>`}
+      <div class="dl-info">
+        <div class="dl-title">${item.title || 'Download'}</div>
+        <div class="dl-meta">${item.quality || 'Video file'}</div>
+        <div class="dl-time">${timeAgo(item.ts)}</div>
+        <div style="margin-top:8px">
+          <div class="dl-item-actions">
+            <a href="${item.url}" download class="dl-open-btn">↓ Re-download</a>
+          </div>
+        </div>
+      </div>
+      <button class="dl-delete-btn" onclick="deleteDownload('${item.id}')">✕</button>
+    </div>`).join('');
+}
+
+function deleteDownload(id) {
+  store.remove('cymor_downloads', id);
+  toast('Removed from downloads');
+  loadDownloads();
+}
+
+function clearAllDownloads() {
+  if (!confirm('Clear all download history?')) return;
+  store.set('cymor_downloads', []);
+  toast('Downloads cleared');
+  loadDownloads();
+}
+
+document.addEventListener('DOMContentLoaded', loadDownloads);
+</script>
+</body>
+</html>

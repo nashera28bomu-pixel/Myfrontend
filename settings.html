@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Settings — Cymor Movie Hub</title>
+  <meta name="theme-color" content="#080a0f"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .settings-header { padding:20px 16px 8px; }
+    .settings-title { font-size:22px; font-weight:700; }
+    .settings-section { padding:12px 16px 4px; }
+    .settings-section-title {
+      font-size:11px; color:var(--text3);
+      font-weight:700; text-transform:uppercase;
+      letter-spacing:0.12em; margin-bottom:8px;
+    }
+    .settings-card {
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      overflow:hidden;
+      margin-bottom:16px;
+    }
+    .settings-row {
+      display:flex; align-items:center;
+      padding:15px 16px; gap:14px;
+      border-bottom:1px solid var(--border);
+      transition:var(--transition);
+    }
+    .settings-row:last-child { border-bottom:none; }
+    .settings-row.clickable { cursor:pointer; }
+    .settings-row.clickable:hover { background:var(--card2); }
+    .settings-icon {
+      width:38px; height:38px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px; flex-shrink:0;
+    }
+    .settings-icon.gold   { background:var(--gold-dim); }
+    .settings-icon.red    { background:rgba(232,75,75,0.1); }
+    .settings-icon.blue   { background:rgba(75,122,232,0.1); }
+    .settings-icon.green  { background:rgba(75,232,122,0.1); }
+    .settings-text { flex:1; }
+    .settings-label { font-size:15px; font-weight:500; }
+    .settings-sub   { font-size:12px; color:var(--text3); margin-top:1px; }
+    .settings-arrow { color:var(--text3); font-size:16px; }
+    .toggle {
+      width:48px; height:26px;
+      background:var(--bg3); border-radius:99px;
+      position:relative; cursor:pointer;
+      transition:background 0.3s ease; flex-shrink:0;
+      border:1px solid var(--border);
+    }
+    .toggle.on { background:var(--gold); border-color:var(--gold); }
+    .toggle::after {
+      content:''; position:absolute;
+      top:3px; left:3px;
+      width:18px; height:18px;
+      background:#fff; border-radius:50%;
+      transition:transform 0.3s ease;
+      box-shadow:0 1px 4px rgba(0,0,0,0.3);
+    }
+    .toggle.on::after { transform:translateX(22px); }
+    .about-card {
+      margin:16px;
+      background:linear-gradient(135deg,rgba(232,184,75,0.06),rgba(232,184,75,0.02));
+      border:1px solid rgba(232,184,75,0.15);
+      border-radius:var(--radius);
+      padding:24px; text-align:center;
+    }
+    .about-logo {
+      width:64px; height:64px; background:var(--gold);
+      border-radius:18px; margin:0 auto 12px;
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Bebas Neue',sans-serif; font-size:30px; color:var(--bg);
+      box-shadow:0 0 30px rgba(232,184,75,0.25);
+    }
+    .about-name { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:0.1em; color:var(--gold); }
+    .about-version { font-size:13px; color:var(--text3); margin-top:4px; }
+    .about-desc { font-size:13px; color:var(--text2); margin-top:10px; line-height:1.6; }
+    .about-powered { font-size:11px; color:var(--text3); margin-top:12px; }
+    .about-powered span { color:var(--gold); }
+    .server-status {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 14px; border-radius:99px;
+      font-size:12px; font-weight:600;
+      margin-top:12px;
+    }
+    .server-status.ok { background:rgba(75,232,122,0.1); color:var(--green); border:1px solid rgba(75,232,122,0.2); }
+    .server-status.err { background:rgba(232,75,75,0.1); color:var(--red); border:1px solid rgba(232,75,75,0.2); }
+    .status-dot { width:7px; height:7px; border-radius:50%; background:currentColor; animation:blink 1.2s ease infinite; }
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  </style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-logo">C</div>
+  <div class="splash-title">Cymor Movie Hub</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-mark">C</div>
+    <span class="nav-logo-text">CYMOR</span>
+  </a>
+  <div style="flex:1"></div>
+</nav>
+
+<div class="page-content">
+  <div class="settings-header">
+    <div class="settings-title">⚙️ Settings</div>
+  </div>
+
+  <!-- Preferences -->
+  <div class="settings-section">
+    <div class="settings-section-title">Preferences</div>
+    <div class="settings-card">
+      <div class="settings-row">
+        <div class="settings-icon gold">🔔</div>
+        <div class="settings-text">
+          <div class="settings-label">Notifications</div>
+          <div class="settings-sub">New content alerts</div>
+        </div>
+        <div class="toggle" id="toggle-notif" onclick="togglePref('notif')"></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-icon blue">📱</div>
+        <div class="settings-text">
+          <div class="settings-label">Auto-play Trailers</div>
+          <div class="settings-sub">Play trailers when viewing details</div>
+        </div>
+        <div class="toggle" id="toggle-autoplay" onclick="togglePref('autoplay')"></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-icon green">💾</div>
+        <div class="settings-text">
+          <div class="settings-label">Save History</div>
+          <div class="settings-sub">Remember recently viewed titles</div>
+        </div>
+        <div class="toggle on" id="toggle-history" onclick="togglePref('history')"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data & Storage -->
+  <div class="settings-section">
+    <div class="settings-section-title">Data & Storage</div>
+    <div class="settings-card">
+      <div class="settings-row clickable" onclick="clearHistory()">
+        <div class="settings-icon gold">🕐</div>
+        <div class="settings-text">
+          <div class="settings-label">Clear Watch History</div>
+          <div class="settings-sub" id="history-count">Loading…</div>
+        </div>
+        <div class="settings-arrow">›</div>
+      </div>
+      <div class="settings-row clickable" onclick="clearWatchlist()">
+        <div class="settings-icon blue">🔖</div>
+        <div class="settings-text">
+          <div class="settings-label">Clear Watchlist</div>
+          <div class="settings-sub" id="watchlist-count">Loading…</div>
+        </div>
+        <div class="settings-arrow">›</div>
+      </div>
+      <div class="settings-row clickable" onclick="clearDownloads()">
+        <div class="settings-icon red">📥</div>
+        <div class="settings-text">
+          <div class="settings-label">Clear Downloads History</div>
+          <div class="settings-sub" id="dl-count">Loading…</div>
+        </div>
+        <div class="settings-arrow">›</div>
+      </div>
+      <div class="settings-row clickable" onclick="clearAllData()">
+        <div class="settings-icon red">🗑️</div>
+        <div class="settings-text">
+          <div class="settings-label">Clear All Data</div>
+          <div class="settings-sub">Reset app to default state</div>
+        </div>
+        <div class="settings-arrow">›</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Server -->
+  <div class="settings-section">
+    <div class="settings-section-title">Server</div>
+    <div class="settings-card">
+      <div class="settings-row">
+        <div class="settings-icon green">🌐</div>
+        <div class="settings-text">
+          <div class="settings-label">Backend API</div>
+          <div class="settings-sub">cymor-movie-hub-api-3n1z.onrender.com</div>
+        </div>
+        <div id="server-indicator" style="font-size:12px;color:var(--text3)">…</div>
+      </div>
+      <div class="settings-row clickable" onclick="pingServer()">
+        <div class="settings-icon blue">🔄</div>
+        <div class="settings-text">
+          <div class="settings-label">Test Connection</div>
+          <div class="settings-sub">Ping the backend server</div>
+        </div>
+        <div class="settings-arrow">›</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About -->
+  <div class="about-card">
+    <div class="about-logo">C</div>
+    <div class="about-name">Cymor Movie Hub</div>
+    <div class="about-version">Version 1.0.0</div>
+    <div class="about-desc">Movies & TV series — search, stream, download. Built for Kenya 🇰🇪</div>
+    <div class="about-powered">Powered by <span>Cymor Tech Services</span> · Always a winner.</div>
+    <div id="server-status-badge" class="server-status ok" style="margin:12px auto 0;display:inline-flex">
+      <div class="status-dot"></div> Checking server…
+    </div>
+  </div>
+
+  <div style="height:20px"></div>
+</div>
+
+<nav class="tabbar">
+  <a href="index.html" class="tab-item" data-tab="home">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    Home
+  </a>
+  <a href="search.html" class="tab-item" data-tab="search">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    Search
+  </a>
+  <a href="downloads.html" class="tab-item" data-tab="downloads">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Downloads
+  </a>
+  <a href="watchlist.html" class="tab-item" data-tab="watchlist">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+    Watchlist
+  </a>
+  <a href="settings.html" class="tab-item active" data-tab="settings">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Settings
+  </a>
+</nav>
+
+<div id="toast-container"></div>
+<script src="app.js"></script>
+<script>
+const API_BASE = 'https://cymor-movie-hub-api-3n1z.onrender.com';
+
+function updateCounts() {
+  const h  = store.get('cymor_history',   []).length;
+  const wl = store.get('cymor_watchlist', []).length;
+  const dl = store.get('cymor_downloads', []).length;
+  document.getElementById('history-count').textContent   = `${h} item${h!==1?'s':''}`;
+  document.getElementById('watchlist-count').textContent = `${wl} title${wl!==1?'s':''}`;
+  document.getElementById('dl-count').textContent        = `${dl} file${dl!==1?'s':''}`;
+}
+
+function togglePref(key) {
+  const el = document.getElementById(`toggle-${key}`);
+  el.classList.toggle('on');
+  store.set(`cymor_pref_${key}`, el.classList.contains('on'));
+}
+
+function loadPrefs() {
+  ['notif','autoplay','history'].forEach(key => {
+    const val = store.get(`cymor_pref_${key}`, key === 'history');
+    const el  = document.getElementById(`toggle-${key}`);
+    if (el) el.classList.toggle('on', val);
+  });
+}
+
+function clearHistory()   { if(!confirm('Clear watch history?')) return; store.set('cymor_history',[]); toast('History cleared'); updateCounts(); }
+function clearWatchlist() { if(!confirm('Clear watchlist?')) return; store.set('cymor_watchlist',[]); toast('Watchlist cleared'); updateCounts(); }
+function clearDownloads() { if(!confirm('Clear downloads history?')) return; store.set('cymor_downloads',[]); toast('Downloads cleared'); updateCounts(); }
+function clearAllData()   { if(!confirm('Clear ALL app data? This cannot be undone.')) return; localStorage.clear(); sessionStorage.clear(); toast('All data cleared'); updateCounts(); }
+
+async function pingServer() {
+  const badge = document.getElementById('server-status-badge');
+  const ind   = document.getElementById('server-indicator');
+  badge.className = 'server-status ok'; badge.innerHTML = '<div class="status-dot"></div> Pinging…';
+  ind.textContent = '…';
+  try {
+    const t0  = Date.now();
+    const res = await fetch(`${API_BASE}/health`);
+    const ms  = Date.now() - t0;
+    if (res.ok) {
+      badge.innerHTML = `<div class="status-dot"></div> Online · ${ms}ms`;
+      ind.textContent = '✓'; ind.style.color = 'var(--green)';
+      toast(`Server online (${ms}ms)`, 'success');
+    } else throw new Error();
+  } catch {
+    badge.className = 'server-status err';
+    badge.innerHTML = '<div class="status-dot"></div> Offline / sleeping';
+    ind.textContent = '✕'; ind.style.color = 'var(--red)';
+    toast('Server sleeping — try again in 30s', 'error');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadPrefs();
+  updateCounts();
+  pingServer();
+});
+</script>
+</body>
+</html>

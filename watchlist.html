@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Watchlist — Cymor Movie Hub</title>
+  <meta name="theme-color" content="#080a0f"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .wl-header { padding: 20px 16px 16px; display:flex; align-items:center; justify-content:space-between; }
+    .wl-title  { font-size:22px; font-weight:700; }
+    .wl-count  { font-size:14px; color:var(--text3); }
+    .wl-clear  { font-size:13px; color:var(--red); font-weight:600; cursor:pointer; }
+    .wl-empty  { padding:80px 24px; display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center; }
+    .wl-empty-icon  { font-size:64px; opacity:0.3; }
+    .wl-empty-title { font-size:20px; font-weight:600; color:var(--text2); }
+    .wl-empty-sub   { font-size:14px; color:var(--text3); max-width:260px; }
+    .wl-item {
+      display:flex; align-items:center; gap:14px;
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      cursor:pointer; transition:var(--transition);
+    }
+    .wl-item:hover { background:var(--card); }
+    .wl-poster {
+      width:60px; height:88px; border-radius:8px;
+      object-fit:cover; background:var(--bg3);
+      flex-shrink:0;
+    }
+    .wl-info { flex:1; min-width:0; }
+    .wl-item-title { font-weight:600; font-size:15px; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .wl-item-meta  { font-size:12px; color:var(--text3); }
+    .wl-rating     { color:var(--gold); font-weight:600; }
+    .wl-remove {
+      width:36px; height:36px; border-radius:50%;
+      background:rgba(232,75,75,0.08); border:1px solid rgba(232,75,75,0.15);
+      color:var(--red); font-size:14px;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; cursor:pointer; transition:var(--transition);
+    }
+    .wl-remove:hover { background:rgba(232,75,75,0.2); }
+  </style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-logo">C</div>
+  <div class="splash-title">Cymor Movie Hub</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-mark">C</div>
+    <span class="nav-logo-text">CYMOR</span>
+  </a>
+  <div style="flex:1"></div>
+</nav>
+
+<div class="page-content">
+  <div class="wl-header">
+    <div>
+      <div class="wl-title">🔖 Watchlist</div>
+      <div class="wl-count" id="wl-count"></div>
+    </div>
+    <span class="wl-clear" onclick="clearWatchlist()">Clear All</span>
+  </div>
+
+  <div id="wl-list"></div>
+</div>
+
+<nav class="tabbar">
+  <a href="index.html" class="tab-item" data-tab="home">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    Home
+  </a>
+  <a href="search.html" class="tab-item" data-tab="search">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    Search
+  </a>
+  <a href="downloads.html" class="tab-item" data-tab="downloads">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Downloads
+  </a>
+  <a href="watchlist.html" class="tab-item active" data-tab="watchlist">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+    Watchlist
+  </a>
+  <a href="settings.html" class="tab-item" data-tab="settings">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Settings
+  </a>
+</nav>
+
+<div id="toast-container"></div>
+<script src="app.js"></script>
+<script>
+function loadWatchlist() {
+  const wl   = store.get('cymor_watchlist', []);
+  const list = document.getElementById('wl-list');
+  const countEl = document.getElementById('wl-count');
+  countEl.textContent = `${wl.length} title${wl.length !== 1 ? 's' : ''} saved`;
+
+  if (!wl.length) {
+    list.innerHTML = `
+      <div class="wl-empty">
+        <div class="wl-empty-icon">🔖</div>
+        <div class="wl-empty-title">Your watchlist is empty</div>
+        <div class="wl-empty-sub">Bookmark movies and series to watch later</div>
+        <a href="index.html" class="btn-primary" style="margin-top:8px">Browse Content</a>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = wl.map(item => `
+    <div class="wl-item" onclick='goToDetail(${JSON.stringify(item)})'>
+      ${item.poster
+        ? `<img class="wl-poster" src="${item.poster}" onerror="this.style.background='var(--bg3)';this.style.display='flex'">`
+        : `<div class="wl-poster" style="display:flex;align-items:center;justify-content:center;font-size:28px">🎬</div>`}
+      <div class="wl-info">
+        <div class="wl-item-title">${item.title || 'Unknown'}</div>
+        <div class="wl-item-meta">
+          ${item.year || ''}
+          ${item.rating ? `&nbsp;•&nbsp;<span class="wl-rating">⭐ ${parseFloat(item.rating).toFixed(1)}</span>` : ''}
+          ${item.type === 'series' ? '&nbsp;•&nbsp;Series' : ''}
+        </div>
+      </div>
+      <button class="wl-remove" onclick="event.stopPropagation();removeFromWatchlist('${item.id || item.page_url}')">✕</button>
+    </div>`).join('');
+}
+
+function removeFromWatchlist(id) {
+  store.remove('cymor_watchlist', id);
+  toast('Removed from watchlist');
+  loadWatchlist();
+}
+
+function clearWatchlist() {
+  if (!confirm('Clear entire watchlist?')) return;
+  store.set('cymor_watchlist', []);
+  toast('Watchlist cleared');
+  loadWatchlist();
+}
+
+document.addEventListener('DOMContentLoaded', loadWatchlist);
+</script>
+</body>
+</html>

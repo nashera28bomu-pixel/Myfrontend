@@ -5,27 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Watch — Cymor Movie Hub</title>
 <link rel="stylesheet" href="style.css"/>
+<!-- HLS.js for direct stream playback -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
 <style>
   body { padding: 16px; max-width: 900px; margin: 0 auto; }
 
-  /* ── Player FIRST ── */
+  /* ── Player ── */
   .player-wrap {
     position: relative; width: 100%; aspect-ratio: 16/9;
     background: #000; border-radius: 12px; overflow: hidden;
     margin-bottom: 14px;
   }
-  #playerFrame {
-    width: 100%; height: 100%; border: none; display: block;
+  #mainPlayer {
+    width: 100%; height: 100%; display: block; background: #000;
   }
   .player-overlay {
     position: absolute; inset: 0; display: flex;
     align-items: center; justify-content: center;
     background: rgba(0,0,0,0.75); flex-direction: column; gap: 12px;
+    cursor: pointer;
   }
   .play-btn {
     background: var(--gold); color: var(--bg); border: none;
-    border-radius: 50%; width: 64px; height: 64px;
-    font-size: 26px; cursor: pointer; display: flex;
+    border-radius: 50%; width: 68px; height: 68px;
+    font-size: 28px; cursor: pointer; display: flex;
     align-items: center; justify-content: center;
   }
   .overlay-title { color: #fff; font-size: 14px; opacity: 0.8; text-align: center; padding: 0 20px; }
@@ -42,7 +45,7 @@
   /* ── Status ── */
   .stream-status { font-size: 12px; color: var(--text2); font-family: monospace; margin-bottom: 14px; min-height: 18px; }
 
-  /* ── Meta (below player, no poster/backdrop) ── */
+  /* ── Meta ── */
   .detail-meta { margin-bottom: 12px; }
   .detail-meta h2 { margin: 0 0 8px; font-size: 1.2rem; }
   .detail-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
@@ -51,13 +54,13 @@
   .overview { font-size: 13px; color: var(--text2); line-height: 1.6; margin: 0 0 16px; }
 
   /* ── Tabs ── */
-  .tab-pills { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 0; }
+  .tab-pills { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
   .tab-pill { padding: 10px 16px; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; font-size: 14px; font-weight: 500; }
   .tab-pill.active { color: var(--gold); border-color: var(--gold); }
   .tab-panel { display: none; padding: 16px 0; }
   .tab-panel.active { display: block; }
 
-  /* ── Episode selector ── */
+  /* ── Episodes ── */
   .season-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
   .season-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--card); color: var(--text2); cursor: pointer; font-size: 13px; }
   .season-btn.active { background: var(--gold); color: var(--bg); border-color: var(--gold); }
@@ -70,7 +73,7 @@
   .dl-info { display: flex; flex-direction: column; gap: 3px; }
   .dl-quality { font-weight: 700; font-size: 14px; }
   .dl-meta { font-size: 12px; color: var(--text2); }
-  .dl-btn { background: var(--gold); color: var(--bg); padding: 7px 14px; border-radius: 20px; cursor: pointer; border: none; font-weight: 600; font-size: 13px; text-decoration: none; }
+  .dl-btn { background: var(--gold); color: var(--bg); padding: 7px 14px; border-radius: 20px; cursor: pointer; border: none; font-weight: 600; font-size: 13px; text-decoration: none; display: inline-block; }
   .dl-btn.secondary { background: var(--card); color: var(--text2); border: 1px solid var(--border); margin-right: 6px; }
 
   /* ── Cast ── */
@@ -81,7 +84,7 @@
   .cast-char { font-size: 10px; color: var(--text3); }
 
   /* ── Recommendations ── */
-  .rec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 4px; }
+  .rec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .rec-item { text-decoration: none; }
   .rec-item img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 8px; display: block; }
   .rec-title { font-size: 11px; color: var(--text2); margin-top: 4px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -109,8 +112,9 @@ let currentSource = 0;
 let currentSeason = 1;
 let currentEp     = 1;
 let seasonData    = {};
+let hlsInstance   = null;
 
-/* ── BOOT ─────────────────────────────────────────── */
+/* ── BOOT ────────────────────────────────────────── */
 async function init() {
   if (!pageId) {
     document.getElementById('page-root').innerHTML = '<p style="padding:20px">No content ID provided.</p>';
@@ -148,7 +152,7 @@ async function init() {
   }
 }
 
-/* ── RENDER ───────────────────────────────────────── */
+/* ── RENDER ──────────────────────────────────────── */
 function renderPage() {
   const d = mediaDetails;
   if (!d) return;
@@ -156,7 +160,7 @@ function renderPage() {
 
   document.getElementById('page-root').innerHTML = `
 
-    <!-- 1. Provider bar -->
+    <!-- Provider bar -->
     <div class="provider-bar" id="provider-bar">
       ${allSources.map((s, i) => `
         <button class="provider-btn ${i === 0 ? 'active' : ''}"
@@ -164,26 +168,19 @@ function renderPage() {
       `).join('')}
     </div>
 
-    <!-- 2. Player -->
+    <!-- Player -->
     <div class="player-wrap">
-      <div class="player-overlay" id="player-overlay">
-        <button class="play-btn" onclick="startPlayer()">▶</button>
+      <div class="player-overlay" id="player-overlay" onclick="startPlayer()">
+        <button class="play-btn">▶</button>
         <span class="overlay-title">${d.title}${isSeries ? ` — S${currentSeason}E${currentEp}` : ''}</span>
       </div>
-      <iframe id="playerFrame"
-        allowfullscreen
-        allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-        referrerpolicy="no-referrer-when-downgrade"
-        style="display:none; width:100%; height:100%; border:none;">
-      </iframe>
+      <video id="mainPlayer" controls playsinline></video>
     </div>
-
-    <!-- 3. Status -->
     <div class="stream-status" id="stream-status">
-      ${allSources[0]?.provider ? `Provider: ${allSources[0].provider} — tap ▶ to play` : 'No sources available'}
+      ${allSources[0]?.provider ? `${allSources[0].provider} ready — tap ▶ to play` : 'No sources found'}
     </div>
 
-    <!-- 4. Title + badges + description only (no poster/backdrop) -->
+    <!-- Meta -->
     <div class="detail-meta">
       <h2>${d.title}</h2>
       <div class="detail-badges">
@@ -196,7 +193,7 @@ function renderPage() {
       ${d.overview ? `<p class="overview">${d.overview}</p>` : ''}
     </div>
 
-    <!-- 5. Tabs -->
+    <!-- Tabs -->
     <div class="tab-pills">
       ${isSeries ? `<div class="tab-pill active" id="tpill-episodes" onclick="switchTab('episodes')">Episodes</div>` : ''}
       <div class="tab-pill ${isSeries ? '' : 'active'}" id="tpill-downloads" onclick="switchTab('downloads')">Downloads</div>
@@ -204,7 +201,6 @@ function renderPage() {
       <div class="tab-pill" id="tpill-more" onclick="switchTab('more')">More Like This</div>
     </div>
 
-    <!-- Episodes -->
     ${isSeries ? `
     <div class="tab-panel active" id="tab-episodes">
       <div class="season-row" id="season-row">
@@ -218,22 +214,18 @@ function renderPage() {
       </div>
     </div>` : ''}
 
-    <!-- Downloads -->
     <div class="tab-panel ${isSeries ? '' : 'active'}" id="tab-downloads">
       <div id="downloads-content">
         <div class="loading-center"><div class="spinner"></div></div>
       </div>
     </div>
 
-    <!-- Cast -->
     <div class="tab-panel" id="tab-cast">
       <div class="cast-scroll">
         ${(d.cast || []).length
           ? d.cast.map(c => `
               <div class="cast-item">
-                ${c.photo
-                  ? `<img src="${c.photo}" loading="lazy" onerror="this.style.display='none'">`
-                  : `<div style="width:60px;height:60px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:22px">👤</div>`}
+                ${c.photo ? `<img src="${c.photo}" loading="lazy" onerror="this.style.display='none'">` : `<div style="width:60px;height:60px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:22px">👤</div>`}
                 <div class="cast-name">${c.name}</div>
                 <div class="cast-char">${c.character || ''}</div>
               </div>`).join('')
@@ -241,7 +233,6 @@ function renderPage() {
       </div>
     </div>
 
-    <!-- More Like This -->
     <div class="tab-panel" id="tab-more">
       <div class="rec-grid" id="rec-grid">
         <div class="loading-center"><div class="spinner"></div></div>
@@ -253,16 +244,51 @@ function renderPage() {
   loadDownloads();
 }
 
-/* ── PLAYER ───────────────────────────────────────── */
+/* ── PLAYER ──────────────────────────────────────── */
 function startPlayer() {
   if (!allSources.length) { setStatus('No streaming sources available.'); return; }
   const overlay = document.getElementById('player-overlay');
-  const frame   = document.getElementById('playerFrame');
   if (overlay) overlay.style.display = 'none';
-  if (frame) {
-    frame.style.display = 'block';
-    frame.src = allSources[currentSource].url;
-    setStatus(`Playing via ${allSources[currentSource].provider}`);
+  loadStream(allSources[currentSource].url);
+}
+
+function loadStream(url) {
+  const video = document.getElementById('mainPlayer');
+  if (!video) return;
+
+  // Destroy previous HLS instance
+  if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+
+  setStatus(`Loading ${allSources[currentSource].provider}...`);
+
+  // Try HLS.js first (for .m3u8 streams)
+  if (Hls.isSupported()) {
+    hlsInstance = new Hls({ enableWorker: true });
+    hlsInstance.loadSource(url);
+    hlsInstance.attachMedia(video);
+    hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.play().catch(() => {});
+      setStatus(`▶ Playing via ${allSources[currentSource].provider}`);
+    });
+    hlsInstance.on(Hls.Events.ERROR, (_, data) => {
+      if (data.fatal) {
+        // HLS failed — try as direct MP4
+        hlsInstance.destroy(); hlsInstance = null;
+        video.src = url;
+        video.play().catch(() => {});
+        setStatus(`▶ Playing via ${allSources[currentSource].provider} (direct)`);
+      }
+    });
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    // Native HLS (Safari/iOS)
+    video.src = url;
+    video.play().catch(() => {});
+    setStatus(`▶ Playing via ${allSources[currentSource].provider}`);
+  } else {
+    // Fallback direct src
+    video.src = url;
+    video.play().catch(() => {});
+    setStatus(`▶ Playing via ${allSources[currentSource].provider}`);
   }
 }
 
@@ -272,12 +298,12 @@ function switchProvider(index) {
     const btn = document.getElementById(`pbtn-${i}`);
     if (btn) btn.className = `provider-btn ${i === index ? 'active' : ''}`;
   });
-  const frame = document.getElementById('playerFrame');
-  if (frame && frame.style.display !== 'none') {
-    frame.src = allSources[index].url;
-    setStatus(`Switched to ${allSources[index].provider}`);
+  const overlay = document.getElementById('player-overlay');
+  const isPlaying = overlay && overlay.style.display === 'none';
+  if (isPlaying) {
+    loadStream(allSources[index].url);
   } else {
-    setStatus(`Provider: ${allSources[index].provider} — tap ▶ to play`);
+    setStatus(`${allSources[index].provider} selected — tap ▶ to play`);
   }
 }
 
@@ -286,13 +312,13 @@ function setStatus(msg) {
   if (el) el.textContent = msg;
 }
 
-/* ── EPISODES ─────────────────────────────────────── */
+/* ── EPISODES ────────────────────────────────────── */
 async function selectSeason(season) {
   currentSeason = season;
   currentEp = 1;
   document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active'));
-  const active = document.getElementById(`sbtn-${season}`);
-  if (active) active.classList.add('active');
+  const btn = document.getElementById(`sbtn-${season}`);
+  if (btn) btn.classList.add('active');
   await loadEpisodes(season);
 }
 
@@ -313,7 +339,6 @@ async function loadEpisodes(season) {
             onclick="selectEpisode(${season}, ${ep.episode_number})">${ep.episode_number}</button>`).join('')
       : '<p class="no-data">No episodes found.</p>';
   } catch {
-    // Fallback: show 20 buttons
     grid.innerHTML = Array.from({length: 20}, (_, i) => `
       <button class="ep-btn ${i + 1 === currentEp ? 'active' : ''}"
         onclick="selectEpisode(${season}, ${i + 1})">${i + 1}</button>`).join('');
@@ -327,34 +352,41 @@ async function selectEpisode(season, episode) {
   const btn = document.getElementById(`epbtn-${episode}`);
   if (btn) btn.classList.add('active');
 
-  setStatus(`Loading S${season}E${episode}...`);
+  setStatus(`Fetching S${season}E${episode} sources...`);
   try {
     const data = await cymor.episodeSources(pageId, season, episode);
     allSources    = data.sources || [];
     currentSource = 0;
 
+    // Rebuild provider bar
     const bar = document.getElementById('provider-bar');
     if (bar) bar.innerHTML = allSources.map((s, i) => `
       <button class="provider-btn ${i === 0 ? 'active' : ''}"
         id="pbtn-${i}" onclick="switchProvider(${i})">${s.provider}</button>`).join('');
 
+    // Reset overlay
     const overlay = document.getElementById('player-overlay');
-    const frame   = document.getElementById('playerFrame');
     if (overlay) {
       overlay.style.display = 'flex';
       overlay.innerHTML = `
-        <button class="play-btn" onclick="startPlayer()">▶</button>
+        <button class="play-btn">▶</button>
         <span class="overlay-title">S${season}E${episode} — tap to play</span>`;
+      overlay.onclick = startPlayer;
     }
-    if (frame) { frame.style.display = 'none'; frame.src = ''; }
+
+    // Stop current stream
+    const video = document.getElementById('mainPlayer');
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    if (video) { video.pause(); video.src = ''; }
+
     setStatus(`S${season}E${episode} ready — tap ▶ to play`);
     loadDownloads(season, episode);
   } catch (e) {
-    setStatus(`Failed to load sources: ${e.message}`);
+    setStatus(`Failed: ${e.message}`);
   }
 }
 
-/* ── DOWNLOADS ────────────────────────────────────── */
+/* ── DOWNLOADS ───────────────────────────────────── */
 async function loadDownloads(season = currentSeason, episode = currentEp) {
   const box = document.getElementById('downloads-content');
   if (!box) return;
@@ -363,7 +395,6 @@ async function loadDownloads(season = currentSeason, episode = currentEp) {
     const data = isSeries
       ? await cymor.seriesDownloads(pageId, season, episode)
       : await cymor.movieDownloads(pageId);
-
     const list = data?.downloads || [];
     if (!list.length) {
       box.innerHTML = `<p class="no-data">${data?.message || 'No downloads available for this title.'}</p>`;
@@ -385,7 +416,7 @@ async function loadDownloads(season = currentSeason, episode = currentEp) {
   }
 }
 
-/* ── TABS ─────────────────────────────────────────── */
+/* ── TABS ────────────────────────────────────────── */
 function switchTab(tab) {
   const tabs = isSeries ? ['episodes', 'downloads', 'cast', 'more'] : ['downloads', 'cast', 'more'];
   tabs.forEach(t => {

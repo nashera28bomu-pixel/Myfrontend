@@ -5,159 +5,486 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Watch — Cymor Movie Hub</title>
 <link rel="stylesheet" href="style.css"/>
-
 <style>
-  body { padding: 16px; }
-  .tab-pills { display:flex; gap:8px; margin:20px 0; border-bottom:1px solid var(--border); }
-  .tab-pill { padding:10px 14px; cursor:pointer; color:var(--text3); border-bottom:2px solid transparent; }
-  .tab-pill.active { color:var(--gold); border-color:var(--gold); }
-  .tab-panel { display:none; }
-  .tab-panel.active { display:block; }
+  body { padding: 16px; max-width: 900px; margin: 0 auto; }
 
-  .dl-quality-item {
-    display:flex; justify-content:space-between; align-items:center;
-    padding:12px; border:1px solid var(--border);
-    margin-bottom:8px; border-radius:8px; background:var(--card);
+  /* ── Backdrop ── */
+  .backdrop {
+    width: calc(100% + 32px); margin-left: -16px; margin-top: -16px;
+    height: 220px; object-fit: cover; display: block;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7) 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7) 60%, transparent 100%);
   }
 
-  .dl-quality-btn {
-    background:var(--gold); color:var(--bg); padding:6px 12px;
-    border-radius:20px; cursor:pointer; border:none; font-weight:600;
+  /* ── Meta ── */
+  .detail-meta { display: flex; gap: 14px; margin: 14px 0; align-items: flex-start; }
+  .detail-poster { width: 90px; min-width: 90px; border-radius: 8px; }
+  .detail-info h2 { margin: 0 0 6px; font-size: 1.2rem; }
+  .detail-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+  .badge { background: var(--card); border: 1px solid var(--border); padding: 3px 8px; border-radius: 20px; font-size: 12px; color: var(--text2); }
+  .badge.gold { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 700; }
+  .overview { font-size: 13px; color: var(--text2); line-height: 1.5; margin: 10px 0; }
+
+  /* ── Player ── */
+  .player-wrap {
+    position: relative; width: 100%; aspect-ratio: 16/9;
+    background: #000; border-radius: 12px; overflow: hidden;
+    margin: 16px 0;
+  }
+  #playerFrame {
+    width: 100%; height: 100%; border: none; display: block;
+  }
+  .player-overlay {
+    position: absolute; inset: 0; display: flex;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.7); flex-direction: column; gap: 12px;
+  }
+  .play-btn {
+    background: var(--gold); color: var(--bg); border: none;
+    border-radius: 50%; width: 64px; height: 64px;
+    font-size: 24px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .overlay-title { color: #fff; font-size: 14px; opacity: 0.8; }
+
+  /* ── Provider switcher ── */
+  .provider-bar {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .provider-btn {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text2); cursor: pointer;
+    font-size: 13px; transition: all 0.2s;
+  }
+  .provider-btn.active { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 700; }
+  .provider-btn.failed { opacity: 0.4; text-decoration: line-through; }
+
+  /* ── Status ── */
+  .stream-status {
+    font-size: 12px; color: var(--text2); font-family: monospace;
+    margin-bottom: 10px; min-height: 18px;
   }
 
-  #videoPlayer {
-    width:100%; aspect-ratio: 16/9;
-    background:black; border-radius:12px; margin-bottom:15px;
+  /* ── Tabs ── */
+  .tab-pills { display: flex; gap: 0; margin: 20px 0 0; border-bottom: 1px solid var(--border); }
+  .tab-pill {
+    padding: 10px 16px; cursor: pointer; color: var(--text3);
+    border-bottom: 2px solid transparent; font-size: 14px; font-weight: 500;
   }
-  
-  .stream-controls { display:flex; gap:10px; margin-bottom:15px; }
-  .stream-status { font-size:13px; color:var(--text2); margin-bottom:15px; font-family:monospace; }
+  .tab-pill.active { color: var(--gold); border-color: var(--gold); }
+  .tab-panel { display: none; padding: 16px 0; }
+  .tab-panel.active { display: block; }
 
-  /* More Like This Section */
-  .rec-section { margin-top: 30px; }
-  .rec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-  .rec-item img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 8px; }
+  /* ── Episode selector ── */
+  .season-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .season-btn {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text2); cursor: pointer; font-size: 13px;
+  }
+  .season-btn.active { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .episode-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .ep-btn {
+    aspect-ratio: 1; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text2); cursor: pointer;
+    font-size: 13px; font-weight: 600; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .ep-btn.active { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+
+  /* ── Downloads ── */
+  .dl-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px; border: 1px solid var(--border);
+    margin-bottom: 8px; border-radius: 10px; background: var(--card);
+  }
+  .dl-info { display: flex; flex-direction: column; gap: 3px; }
+  .dl-quality { font-weight: 700; font-size: 14px; }
+  .dl-meta { font-size: 12px; color: var(--text2); }
+  .dl-btn {
+    background: var(--gold); color: var(--bg); padding: 7px 14px;
+    border-radius: 20px; cursor: pointer; border: none; font-weight: 600;
+    font-size: 13px; text-decoration: none;
+  }
+  .dl-btn.secondary { background: var(--card); color: var(--text2); border: 1px solid var(--border); margin-right: 6px; }
+
+  /* ── Cast ── */
+  .cast-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+  .cast-item { min-width: 70px; text-align: center; }
+  .cast-item img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+  .cast-item .cast-name { font-size: 11px; margin-top: 4px; color: var(--text2); }
+  .cast-item .cast-char { font-size: 10px; color: var(--text3); }
+
+  /* ── Recommendations ── */
+  .rec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+  .rec-item img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 8px; display: block; }
+  .rec-item { text-decoration: none; }
+  .rec-title { font-size: 11px; color: var(--text2); margin-top: 4px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+  .loading-center { display: flex; justify-content: center; padding: 60px 0; }
+  .no-data { color: var(--text3); font-size: 14px; padding: 20px 0; }
 </style>
 </head>
-
 <body>
 
-<div id="detail-info">
+<div id="page-root">
   <div class="loading-center"><div class="spinner"></div></div>
 </div>
 
 <script src="app.js"></script>
 <script>
-const params = new URLSearchParams(location.search);
-const pageId = params.get('id');
-const type = params.get('type') || 'movie';
+/* ═══════════════════════════════════════════════════
+   CYMOR WATCH PAGE — v4.0
+   4-provider fallback: VidSrc Pro → VidSrc → 2Embed → EmbedSu
+═══════════════════════════════════════════════════ */
+const params   = new URLSearchParams(location.search);
+const pageId   = params.get('id');
+const type     = params.get('type') || 'movie';
 const isSeries = type === 'series';
 
-let details = null, currentMagnet = null, destroyStream = null;
+let mediaDetails  = null;
+let allSources    = [];
+let currentSource = 0;
+let currentSeason = 1;
+let currentEp     = 1;
+let seasonData    = {};   // cache episode counts per season
 
-/* ─────────────────────────────
-   INITIALIZATION
-───────────────────────────── */
-async function loadDetail() {
-  if (!pageId) return;
+/* ───────────────────────────────────────────────────
+   BOOT
+─────────────────────────────────────────────────── */
+async function init() {
+  if (!pageId) {
+    document.getElementById('page-root').innerHTML = '<p style="padding:20px">No content ID provided.</p>';
+    return;
+  }
   try {
-    details = isSeries ? await cymor.seriesDetails(pageId) : await cymor.movieDetails(pageId);
-    renderMainUI();
-    
-    // Fetch Sources and Recommendations
-    const sources = isSeries ? await cymor.episodeSources(pageId, 1, 1) : await cymor.movieSources(pageId);
-    renderDownloads(sources);
-    
-    const recs = await cymor.getRecommendations(pageId);
-    renderRecommendations(recs);
+    // Load details + sources in parallel
+    const [detailRes, sourcesRes] = await Promise.all([
+      isSeries ? cymor.seriesDetails(pageId) : cymor.movieDetails(pageId),
+      isSeries
+        ? cymor.episodeSources(pageId, currentSeason, currentEp)
+        : cymor.movieSources(pageId),
+    ]);
+
+    mediaDetails = isSeries ? detailRes.series : detailRes.movie;
+    allSources   = sourcesRes.sources || [];
+
+    renderPage();
+
+    // Load recommendations in background
+    cymor.getRecommendations(pageId, type).then(data => {
+      const grid = document.getElementById('rec-grid');
+      const list = data?.results || [];
+      if (grid) grid.innerHTML = list.length
+        ? list.map(m => `
+            <a href="watch.html?id=${m.id}&type=${m.type}" class="rec-item">
+              <img src="${m.poster || ''}" onerror="this.style.display='none'" loading="lazy">
+              <div class="rec-title">${m.title || ''}</div>
+            </a>`).join('')
+        : '<p class="no-data">No recommendations found.</p>';
+    });
+
   } catch (e) {
-    document.getElementById('detail-info').innerHTML = `<h3>Error</h3><p>${e.message}</p>`;
+    document.getElementById('page-root').innerHTML =
+      `<div style="padding:20px"><h3>Failed to load</h3><p>${e.message}</p>
+       <a href="index.html">← Home</a></div>`;
   }
 }
 
-/* ─────────────────────────────
-   UI RENDERING
-───────────────────────────── */
-function renderMainUI() {
-  document.getElementById('detail-info').innerHTML = `
-    <h2>${details.title}</h2>
-    <video id="videoPlayer" controls playsinline></video>
-    
-    <div class="stream-controls">
-      <button class="dl-quality-btn" onclick="startStreaming()">▶ Watch Now</button>
-      <button class="dl-quality-btn" style="background:var(--text3)" onclick="stopStreaming()">⛔ Stop</button>
-    </div>
-    <div id="stream-status" class="stream-status">Ready</div>
+/* ───────────────────────────────────────────────────
+   RENDER FULL PAGE
+─────────────────────────────────────────────────── */
+function renderPage() {
+  const d = mediaDetails;
+  if (!d) return;
 
+  document.title = `${d.title} — Cymor Movie Hub`;
+
+  document.getElementById('page-root').innerHTML = `
+
+    ${d.backdrop ? `<img class="backdrop" src="${d.backdrop}" alt="">` : ''}
+
+    <!-- Meta -->
+    <div class="detail-meta">
+      ${d.poster ? `<img class="detail-poster" src="${d.poster}" alt="${d.title}">` : ''}
+      <div class="detail-info">
+        <h2>${d.title}</h2>
+        <div class="detail-badges">
+          ${d.year    ? `<span class="badge">${d.year}</span>` : ''}
+          ${d.rating  ? `<span class="badge gold">⭐ ${d.rating}</span>` : ''}
+          ${d.runtime ? `<span class="badge">${d.runtime} min</span>` : ''}
+          ${d.seasons ? `<span class="badge">${d.seasons} Seasons</span>` : ''}
+          ${(d.genres || []).slice(0,2).map(g => `<span class="badge">${g}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    ${d.overview ? `<p class="overview">${d.overview}</p>` : ''}
+
+    <!-- Provider switcher -->
+    <div class="provider-bar" id="provider-bar">
+      ${allSources.map((s, i) => `
+        <button class="provider-btn ${i === 0 ? 'active' : ''}"
+          id="pbtn-${i}" onclick="switchProvider(${i})">${s.provider}</button>
+      `).join('')}
+    </div>
+
+    <!-- Player -->
+    <div class="player-wrap">
+      <div class="player-overlay" id="player-overlay">
+        <button class="play-btn" onclick="startPlayer()">▶</button>
+        <span class="overlay-title">Tap to play${isSeries ? ` — S${currentSeason}E${currentEp}` : ''}</span>
+      </div>
+      <iframe id="playerFrame" allowfullscreen allow="autoplay; fullscreen"
+        referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        style="display:none"></iframe>
+    </div>
+    <div class="stream-status" id="stream-status">
+      ${allSources[0]?.provider ? `Provider: ${allSources[0].provider}` : 'No sources found'}
+    </div>
+
+    <!-- Tabs -->
     <div class="tab-pills">
-      <div class="tab-pill active" onclick="switchTab('downloads')">Downloads/Sources</div>
+      ${isSeries ? `<div class="tab-pill active" id="tpill-episodes" onclick="switchTab('episodes')">Episodes</div>` : ''}
+      <div class="tab-pill ${isSeries ? '' : 'active'}" id="tpill-downloads" onclick="switchTab('downloads')">Downloads</div>
+      <div class="tab-pill" id="tpill-cast" onclick="switchTab('cast')">Cast</div>
+      <div class="tab-pill" id="tpill-more" onclick="switchTab('more')">More Like This</div>
     </div>
 
-    <div class="tab-panel active" id="tab-downloads">
-      <div id="downloads"></div>
+    <!-- Episodes tab -->
+    ${isSeries ? `
+    <div class="tab-panel active" id="tab-episodes">
+      <div class="season-row" id="season-row">
+        ${(mediaDetails.season_list || Array.from({length: d.seasons||1}, (_,i) => ({season_number:i+1}))).map(s => `
+          <button class="season-btn ${s.season_number === 1 ? 'active' : ''}"
+            id="sbtn-${s.season_number}"
+            onclick="selectSeason(${s.season_number})">S${s.season_number}</button>
+        `).join('')}
+      </div>
+      <div class="episode-grid" id="episode-grid">
+        <div class="loading-center"><div class="spinner"></div></div>
+      </div>
+    </div>` : ''}
+
+    <!-- Downloads tab -->
+    <div class="tab-panel ${isSeries ? '' : 'active'}" id="tab-downloads">
+      <div id="downloads-content">
+        <div class="loading-center"><div class="spinner"></div></div>
+      </div>
     </div>
 
-    <div class="rec-section">
-      <h3>More Like This</h3>
-      <div class="rec-grid" id="rec-grid"></div>
+    <!-- Cast tab -->
+    <div class="tab-panel" id="tab-cast">
+      <div class="cast-scroll">
+        ${(d.cast || []).length
+          ? (d.cast || []).map(c => `
+              <div class="cast-item">
+                ${c.photo
+                  ? `<img src="${c.photo}" onerror="this.src=''" loading="lazy">`
+                  : `<div style="width:60px;height:60px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:22px">👤</div>`}
+                <div class="cast-name">${c.name}</div>
+                <div class="cast-char">${c.character || ''}</div>
+              </div>`).join('')
+          : '<p class="no-data">No cast info available.</p>'}
+      </div>
+    </div>
+
+    <!-- More Like This tab -->
+    <div class="tab-panel" id="tab-more">
+      <div class="rec-grid" id="rec-grid">
+        <div class="loading-center"><div class="spinner"></div></div>
+      </div>
     </div>
   `;
+
+  // Load episodes for season 1 if series
+  if (isSeries) loadEpisodes(1);
+
+  // Load downloads
+  loadDownloads();
 }
 
-function renderDownloads(files) {
-  const box = document.getElementById('downloads');
-  const list = files?.sources || files?.videos || [];
-  box.innerHTML = list.length ? list.map(v => `
-    <div class="dl-quality-item">
-      <span>${v.quality || 'HD'}</span>
-      <div>
-        <button class="dl-quality-btn" onclick="selectStream('${encodeURIComponent(v.magnet || v.url)}')">Select</button>
-        <button class="dl-quality-btn" onclick="downloadFile('${encodeURIComponent(v.magnet || v.url)}')">⬇</button>
-      </div>
-    </div>`).join('') : 'No sources found';
+/* ───────────────────────────────────────────────────
+   PLAYER
+─────────────────────────────────────────────────── */
+function startPlayer() {
+  if (!allSources.length) {
+    setStatus('No streaming sources available.');
+    return;
+  }
+  const overlay = document.getElementById('player-overlay');
+  const frame   = document.getElementById('playerFrame');
+  if (overlay) overlay.style.display = 'none';
+  if (frame) {
+    frame.style.display = 'block';
+    frame.src = allSources[currentSource].url;
+    setStatus(`Playing via ${allSources[currentSource].provider}`);
+  }
 }
 
-function renderRecommendations(list) {
-  const container = document.getElementById('rec-grid');
-  if(!container) return;
-  container.innerHTML = list.map(m => `
-    <a href="watch.html?id=${m.id}&type=${type}" class="rec-item">
-      <img src="${m.poster}" onerror="this.style.display='none'">
-    </a>
-  `).join('');
+function switchProvider(index) {
+  currentSource = index;
+  // Update button states
+  allSources.forEach((_, i) => {
+    const btn = document.getElementById(`pbtn-${i}`);
+    if (btn) btn.className = `provider-btn ${i === index ? 'active' : ''}`;
+  });
+  // If player is already showing, switch immediately
+  const frame = document.getElementById('playerFrame');
+  if (frame && frame.style.display !== 'none') {
+    frame.src = allSources[index].url;
+    setStatus(`Switched to ${allSources[index].provider}`);
+  } else {
+    setStatus(`Provider: ${allSources[index].provider} — tap play`);
+  }
 }
 
-/* ─────────────────────────────
-   STREAMING LOGIC
-───────────────────────────── */
-function selectStream(magnet) {
-  currentMagnet = decodeURIComponent(magnet);
-  document.getElementById("stream-status").innerText = "Selected: " + currentMagnet.substring(0, 20) + "...";
+function setStatus(msg) {
+  const el = document.getElementById('stream-status');
+  if (el) el.textContent = msg;
 }
 
-function startStreaming() {
-  if (!currentMagnet) return alert("Select a source first");
-  const status = document.getElementById("stream-status");
-  if (destroyStream) destroyStream();
-  status.innerText = "Connecting to peer network...";
-  destroyStream = streamMagnet(currentMagnet, "videoPlayer", 
-    (p) => status.innerText = `Peers: ${p.peers} | ${p.progress}% | ${fmtSpeed(p.downloadSpeed)}`,
-    () => status.innerText = "Playing Live ▶",
-    (err) => status.innerText = "Error: " + err
-  );
+/* ───────────────────────────────────────────────────
+   EPISODES (Series)
+─────────────────────────────────────────────────── */
+async function selectSeason(season) {
+  currentSeason = season;
+  currentEp = 1;
+
+  // Update season buttons
+  document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active'));
+  const active = document.getElementById(`sbtn-${season}`);
+  if (active) active.classList.add('active');
+
+  await loadEpisodes(season);
 }
 
-function stopStreaming() {
-  if (destroyStream) destroyStream();
-  const video = document.getElementById("videoPlayer");
-  video.pause(); video.src = "";
-  document.getElementById("stream-status").innerText = "Stopped";
+async function loadEpisodes(season) {
+  const grid = document.getElementById('episode-grid');
+  if (!grid) return;
+  grid.innerHTML = '<div class="loading-center"><div class="spinner"></div></div>';
+
+  try {
+    // Use cached data or fetch
+    if (!seasonData[season]) {
+      const data = await cymor.seriesSeasons(pageId, season);
+      seasonData[season] = data.episodes || [];
+    }
+    const episodes = seasonData[season];
+    grid.innerHTML = episodes.length
+      ? episodes.map(ep => `
+          <button class="ep-btn ${ep.episode_number === currentEp && season === currentSeason ? 'active' : ''}"
+            id="epbtn-${ep.episode_number}"
+            onclick="selectEpisode(${season}, ${ep.episode_number})">
+            ${ep.episode_number}
+          </button>`).join('')
+      : '<p class="no-data">No episodes found.</p>';
+  } catch (e) {
+    // Fallback: show 20 episode buttons
+    grid.innerHTML = Array.from({length: 20}, (_, i) => `
+      <button class="ep-btn ${i+1 === currentEp ? 'active' : ''}"
+        onclick="selectEpisode(${season}, ${i+1})">${i+1}</button>
+    `).join('');
+  }
 }
 
-function downloadFile(url) { window.open(cymor.torrentProxy(decodeURIComponent(url), "video.mp4"), "_blank"); }
-function switchTab(tab) { /* Add custom tab logic here if needed */ }
+async function selectEpisode(season, episode) {
+  currentSeason = season;
+  currentEp     = episode;
 
-document.addEventListener('DOMContentLoaded', loadDetail);
+  // Update episode button states
+  document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`epbtn-${episode}`);
+  if (btn) btn.classList.add('active');
+
+  // Fetch new sources for this episode
+  setStatus(`Loading S${season}E${episode}...`);
+  try {
+    const data = await cymor.episodeSources(pageId, season, episode);
+    allSources   = data.sources || [];
+    currentSource = 0;
+
+    // Rebuild provider bar
+    const bar = document.getElementById('provider-bar');
+    if (bar) bar.innerHTML = allSources.map((s, i) => `
+      <button class="provider-btn ${i === 0 ? 'active' : ''}"
+        id="pbtn-${i}" onclick="switchProvider(${i})">${s.provider}</button>
+    `).join('');
+
+    // Reset player
+    const overlay = document.getElementById('player-overlay');
+    const frame   = document.getElementById('playerFrame');
+    if (overlay) {
+      overlay.style.display = 'flex';
+      overlay.innerHTML = `
+        <button class="play-btn" onclick="startPlayer()">▶</button>
+        <span class="overlay-title">S${season}E${episode} — Tap to play</span>`;
+    }
+    if (frame) { frame.style.display = 'none'; frame.src = ''; }
+
+    setStatus(`S${season}E${episode} ready — ${allSources.length} sources`);
+
+    // Refresh downloads for new episode
+    loadDownloads(season, episode);
+  } catch (e) {
+    setStatus(`Failed to load sources: ${e.message}`);
+  }
+}
+
+/* ───────────────────────────────────────────────────
+   DOWNLOADS
+─────────────────────────────────────────────────── */
+async function loadDownloads(season = currentSeason, episode = currentEp) {
+  const box = document.getElementById('downloads-content');
+  if (!box) return;
+  box.innerHTML = '<div class="loading-center"><div class="spinner"></div></div>';
+
+  try {
+    const data = isSeries
+      ? await cymor.seriesDownloads(pageId, season, episode)
+      : await cymor.movieDownloads(pageId);
+
+    const list = data?.downloads || [];
+    if (!list.length) {
+      box.innerHTML = '<p class="no-data">No downloads available for this title.</p>';
+      return;
+    }
+
+    box.innerHTML = list.map(d => `
+      <div class="dl-item">
+        <div class="dl-info">
+          <span class="dl-quality">${d.quality || 'HD'} ${d.type ? `· ${d.type}` : ''}</span>
+          <span class="dl-meta">${d.size || ''} ${d.seeds ? `· ${d.seeds} seeds` : ''}</span>
+        </div>
+        <div>
+          <a class="dl-btn secondary" href="${d.torrent_url}" target="_blank">Torrent</a>
+          <a class="dl-btn" href="${d.magnet}" target="_blank">Magnet</a>
+        </div>
+      </div>`).join('');
+  } catch (e) {
+    box.innerHTML = `<p class="no-data">Downloads unavailable: ${e.message}</p>`;
+  }
+}
+
+/* ───────────────────────────────────────────────────
+   TABS
+─────────────────────────────────────────────────── */
+function switchTab(tab) {
+  const tabs = isSeries
+    ? ['episodes', 'downloads', 'cast', 'more']
+    : ['downloads', 'cast', 'more'];
+
+  tabs.forEach(t => {
+    const panel = document.getElementById(`tab-${t}`);
+    const pill  = document.getElementById(`tpill-${t}`);
+    if (panel) panel.classList.toggle('active', t === tab);
+    if (pill)  pill.classList.toggle('active',  t === tab);
+  });
+}
+
+/* ───────────────────────────────────────────────────
+   INIT
+─────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
